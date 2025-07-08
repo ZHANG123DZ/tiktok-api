@@ -36,13 +36,6 @@ app.use(express.urlencoded());
 
 app.use(handlePagination);
 
-app.use('/send-message', (req, res) => {
-  pusher.trigger('k12', 'new-message', {
-    user: 'alice',
-    text: 'Hello world!',
-  });
-});
-
 app.use('/api/v2', router);
 
 //Error Handler
