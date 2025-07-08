@@ -1,0 +1,59 @@
+{
+  "posts": [
+    {
+      "title": "Gái xinh",
+      "content": "Gái xinh",
+      "image": "https://anhnail.com/wp-content/uploads/2024/11/Hinh-gai-xinh-2k4.jpg",
+      "author": "Linh",
+      "id": 2
+    },
+    {
+      "title": "Chim Công",
+      "content": "Chim công",
+      "image": "https://dongvat.edu.vn/upload/2024/06/Chim-cong-002.webp",
+      "author": "Phương",
+      "id": 3
+    },
+    {
+      "title": "h",
+      "content": "h",
+      "image": "https://wellavn.com/wp-content/uploads/2024/11/anh-gai-xinh-2k4-1.jpg?v=1737034969",
+      "author": "Thắng",
+      "id": 5
+    },
+    {
+      "title": "g",
+      "content": "g",
+      "image": "https://wellavn.com/wp-content/uploads/2024/11/anh-gai-xinh-2k4-1.jpg?v=1737034969",
+      "author": "Thắng",
+      "id": 6
+    }
+  ],
+  "comments": [
+    {
+      "content": "hello em gái",
+      "post_id": 1,
+      "id": 1
+    },
+    {
+      "content": "hi llo",
+      "post_id": 1,
+      "id": 2
+    },
+    {
+      "content": "helllo boy",
+      "post_id": 1,
+      "id": 3
+    },
+    {
+      "content": "Em gái xinh quá 😘😘",
+      "post_id": 2,
+      "id": 4
+    },
+    {
+      "content": "Chim đẹp quá",
+      "post_id": 3,
+      "id": 5
+    }
+  ]
+}
