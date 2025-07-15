@@ -30,7 +30,9 @@ class PostsService {
     const toSlug = (title) => {
       return `${slugify(title, { lower: true, strict: true })}-${nanoid(6)}`;
     };
-    data.slug = toSlug(data.title);
+    if (!data.slug) {
+      data.slug = toSlug(data.title);
+    }
     const post = await Post.create(data);
     return post;
   }

@@ -54,8 +54,25 @@ module.exports = {
           type: Sequelize.STRING(191),
           allowNull: true,
         },
+        cover_url: {
+          type: Sequelize.STRING(255),
+          allowNull: true,
+        },
+        title: {
+          type: Sequelize.STRING(255),
+          allowNull: true,
+        },
         bio: {
           type: Sequelize.TEXT,
+          allowNull: true,
+        },
+        social: {
+          type: Sequelize.TEXT,
+          allowNull: true,
+        },
+        posts_count: {
+          type: Sequelize.BIGINT,
+          defaultValue: 0,
           allowNull: true,
         },
         followers_count: {
@@ -90,12 +107,20 @@ module.exports = {
           allowNull: true,
           defaultValue: "active",
         },
-        cover_url: {
+        location: {
+          type: Sequelize.STRING(100),
+          allowNull: true,
+        },
+        website: {
           type: Sequelize.STRING(255),
           allowNull: true,
         },
-        location: {
-          type: Sequelize.STRING(100),
+        skills: {
+          type: Sequelize.TEXT,
+          allowNull: true,
+        },
+        badges: {
+          type: Sequelize.TEXT,
           allowNull: true,
         },
         two_factor_enabled: {
@@ -107,6 +132,10 @@ module.exports = {
           allowNull: true,
         },
         last_login_at: {
+          type: Sequelize.DATE(6),
+          allowNull: true,
+        },
+        email_sent_at: {
           type: Sequelize.DATE(6),
           allowNull: true,
         },
@@ -136,7 +165,6 @@ module.exports = {
         charset: "utf8",
         collate: "utf8_general_ci",
         engine: "InnoDB",
-        timestamps: false,
       }
     );
   },

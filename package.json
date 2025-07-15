@@ -7,6 +7,7 @@
     "ejs": "^3.1.10",
     "express": "^5.1.0",
     "express-validator": "^7.2.1",
+    "faker-js": "^1.0.0",
     "jsonwebtoken": "^9.0.2",
     "module-alias": "^2.2.3",
     "mysql2": "^3.14.1",
@@ -19,6 +20,7 @@
   },
   "scripts": {
     "dev": "node --watch ./server.js",
+    "queue:work": "node --watch ./src/workers/queueWorker.js",
     "db:migrate": "npx sequelize-cli db:migrate",
     "db:migrate:schema:timestamps:add": "npx sequelize-cli db:migrate:schema:timestamps:add",
     "db:migrate:status": "npx sequelize-cli db:migrate:status",
@@ -45,7 +47,7 @@
     "@": "src"
   },
   "devDependencies": {
-    "@faker-js/faker": "^9.8.0",
+    "@faker-js/faker": "^9.9.0",
     "sequelize-cli": "^6.6.3"
   }
 }

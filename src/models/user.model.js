@@ -38,8 +38,25 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING(191),
         allowNull: true,
       },
+      cover_url: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
+      },
+      title: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
+      },
       bio: {
         type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      social: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      posts_count: {
+        type: DataTypes.BIGINT,
+        defaultValue: 0,
         allowNull: true,
       },
       followers_count: {
@@ -74,12 +91,20 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: true,
         defaultValue: "active",
       },
-      cover_url: {
+      location: {
+        type: DataTypes.STRING(100),
+        allowNull: true,
+      },
+      website: {
         type: DataTypes.STRING(255),
         allowNull: true,
       },
-      location: {
-        type: DataTypes.STRING(100),
+      skills: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      badges: {
+        type: DataTypes.TEXT,
         allowNull: true,
       },
       two_factor_enabled: {
@@ -91,6 +116,10 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: true,
       },
       last_login_at: {
+        type: DataTypes.DATE(6),
+        allowNull: true,
+      },
+      email_sent_at: {
         type: DataTypes.DATE(6),
         allowNull: true,
       },

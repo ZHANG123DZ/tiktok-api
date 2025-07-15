@@ -1,7 +1,7 @@
-const jwt = require('jsonwebtoken');
+const jwt = require("jsonwebtoken");
 
-class Token {
-  createToken = (payload, options = {}) => {
+class accessToken {
+  create = (payload, options = {}) => {
     try {
       return jwt.sign(payload, process.env.JWT_SECRET, {
         expiresIn: process.env.JWT_EXPIRES_IN,
@@ -12,7 +12,7 @@ class Token {
     }
   };
 
-  verifyToken = (token) => {
+  verify = (token) => {
     try {
       return jwt.verify(token, process.env.JWT_SECRET);
     } catch (error) {
@@ -21,4 +21,4 @@ class Token {
   };
 }
 
-module.exports = new Token();
+module.exports = new accessToken();

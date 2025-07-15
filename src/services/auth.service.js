@@ -1,14 +1,15 @@
 const bcrypt = require("bcrypt");
 const otpGenerator = require("otp-generator");
 const { RefreshToken, User, Email } = require("@/models/index");
-const { verifyToken } = require("@/utils/token");
+const accessToken = require("@/utils/accessToken");
 const { Op } = require("sequelize");
 
 class authService {
   async auth(token) {
-    const auth = verifyToken(token);
+    const auth = accessToken.verify(token);
     if (!auth) return null;
-    return auth;
+    const user = await User.findOne({ where: { id: auth.sub } });
+    return user;
   }
 
   async login(data) {
@@ -32,15 +33,20 @@ class authService {
     return auth.dataValues;
   }
 
-  //   async sendForgotEmail(id, data) {
-  //     const post = await authModel.sendForgotEmail(id, data);
-  //     return post;
-  //   }
+  async sendForgotEmail(email) {
+    const user = await User.findOne({ where: { email } });
+    return user.dataValues;
+  }
 
-  //   async resetPassword(id) {
-  //     const post = await authModel.resetPassword(id);
-  //     return post;
-  //   }
+  async resetPassword(id, password) {
+    const saltRounds = 10;
+    const newPassword = await bcrypt.hash(password, saltRounds);
+    const user = await User.update(
+      { password: newPassword },
+      { where: { id } }
+    );
+    return user;
+  }
 
   //   async setNewPassword(id) {
   //     const post = await authModel.setNewPassword(id);
@@ -54,7 +60,7 @@ class authService {
       lowerCaseAlphabets: false,
       specialChars: false,
     });
-    data.otp_code = otp;
+    data.body = JSON.stringify({ otp_code: otp });
     data.expired_at = new Date(Date.now() + 1000 * 60);
     data.type = "verification";
     const code = await Email.create(data);

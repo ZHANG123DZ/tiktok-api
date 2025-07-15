@@ -11,7 +11,6 @@ class Cookie {
   };
 
   readCookie = (req, key) => {
-    console.log("cookies: ", req.cookies);
     if (!req.cookies || !req.cookies[key]) return null;
     return req.cookies[key];
   };

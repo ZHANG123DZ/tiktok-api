@@ -9,7 +9,6 @@ class CommentsService {
 
   async getById(id) {
     const comment = await Comment.findOne({ where: { id }, include: Post });
-    console.log(comment);
     return comment;
   }
 

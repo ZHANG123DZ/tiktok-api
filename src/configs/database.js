@@ -7,6 +7,7 @@ module.exports = {
     host: "127.0.0.1",
     port: 3306,
     dialect: "mysql",
+    logging: false,
     dialectOptions: {
       bigNumberStrings: true,
     },
@@ -18,6 +19,7 @@ module.exports = {
     host: "127.0.0.1",
     port: 3306,
     dialect: "mysql",
+    logging: false,
     dialectOptions: {
       bigNumberStrings: true,
     },
@@ -29,6 +31,7 @@ module.exports = {
     host: process.env.PROD_DB_HOSTNAME,
     port: process.env.PROD_DB_PORT,
     dialect: "mysql",
+    logging: false,
     dialectOptions: {
       bigNumberStrings: true,
       // ssl: {

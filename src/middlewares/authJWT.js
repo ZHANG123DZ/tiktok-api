@@ -1,17 +1,31 @@
-const response = require('@/utils/response');
-const { verifyToken } = require('@/utils/token');
+const response = require("@/utils/response");
+const accessToken = require("@/utils/accessToken");
+const { User } = require("@/models");
 
-module.exports = (req, res, next) => {
+module.exports = async (req, res, next) => {
   const token = req.cookies.token;
+
   if (!token) {
-    return response.error(res, 401, 'Ban chua dang nhap hoặc đăng ký');
+    return response.error(res, 401, "Bạn chưa đăng nhập hoặc đăng ký");
   }
 
   try {
-    const decoded = verifyToken(token);
-    req.user = decoded;
+    const decoded = accessToken.verify(token);
+
+    const user = await User.findByPk(decoded.sub);
+    const userData = user.dataValues;
+    if (
+      !userData ||
+      userData.status === "banned" ||
+      userData.status === "inactive"
+    ) {
+      return response.error(res, 403, "Tài khoản không hợp lệ hoặc đã bị khóa");
+    }
+
+    req.user = userData;
     next();
   } catch (error) {
-    response.error(res, 401, 'Token khong hop le');
+    console.error(error);
+    return response.error(res, 401, "Token không hợp lệ");
   }
 };
