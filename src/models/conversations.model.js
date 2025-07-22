@@ -33,7 +33,18 @@ module.exports = (sequelize, DataTypes) => {
     }
   );
   Conversation.associate = (db) => {
-    Conversation.belongsTo(db.Post);
+    Conversation.belongsTo(db.User, {
+      foreignKey: "user_id",
+      as: "creator",
+    });
+    Conversation.hasMany(db.UserConversation, {
+      foreignKey: "conversation_id",
+      as: "participants",
+    });
+    Conversation.hasMany(db.Message, {
+      foreignKey: "conversation_id",
+      as: "messages",
+    });
   };
   return Conversation;
 };

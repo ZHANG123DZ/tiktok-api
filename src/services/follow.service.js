@@ -50,7 +50,6 @@ class FollowsService {
 
   async follow(userId, type, followAbleId) {
     const { model: Model, attributes } = getFollowTargetByType(type);
-    console.log(userId, type, followAbleId);
     const user = await User.findOne({ where: { id: userId } });
     const targetFollow = await Model.findOne({ where: { id: followAbleId } });
     if (!targetFollow || !user) return false;
@@ -61,7 +60,10 @@ class FollowsService {
       follow_able_id: followAbleId,
     };
 
-    const exists = await Follow.findOne({ where });
+    const exists = await Follow.findOne({
+      where,
+      attributes: ["id", "user_id", "follow_able_id", "follow_able_type"],
+    });
 
     if (exists) {
       return false;
@@ -104,6 +106,7 @@ class FollowsService {
 
     const exits = await Follow.findOne({
       where: where,
+      attributes: ["id", "user_id", "follow_able_id", "follow_able_type"],
     });
     return !!exits;
   }

@@ -54,12 +54,12 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.TEXT,
         allowNull: true,
       },
-      posts_count: {
+      post_count: {
         type: DataTypes.BIGINT,
         defaultValue: 0,
         allowNull: true,
       },
-      followers_count: {
+      follower_count: {
         type: DataTypes.BIGINT,
         defaultValue: 0,
         allowNull: true,
@@ -69,7 +69,7 @@ module.exports = (sequelize, DataTypes) => {
         defaultValue: 0,
         allowNull: true,
       },
-      likes_count: {
+      like_count: {
         type: DataTypes.BIGINT,
         defaultValue: 0,
         allowNull: true,
@@ -97,14 +97,6 @@ module.exports = (sequelize, DataTypes) => {
       },
       website: {
         type: DataTypes.STRING(255),
-        allowNull: true,
-      },
-      skills: {
-        type: DataTypes.TEXT,
-        allowNull: true,
-      },
-      badges: {
-        type: DataTypes.TEXT,
         allowNull: true,
       },
       two_factor_enabled: {
@@ -142,7 +134,71 @@ module.exports = (sequelize, DataTypes) => {
     }
   );
   User.associate = (db) => {
-    // User.hasMany(db.Post);
+    User.hasOne(db.UserSetting, {
+      foreignKey: "user_id",
+      as: "setting",
+    });
+    User.hasMany(db.Email, {
+      foreignKey: "user_id",
+      as: "emails",
+    });
+    User.hasMany(db.Comment, {
+      foreignKey: "user_id",
+      as: "comments",
+    });
+    User.hasMany(db.Follow, {
+      foreignKey: "user_id",
+      as: "follows",
+    });
+    User.hasMany(db.Like, {
+      foreignKey: "user_id",
+      as: "likes",
+    });
+    User.hasMany(db.BookMark, {
+      foreignKey: "user_id",
+      as: "bookmarks",
+    });
+    User.hasMany(db.Notification, {
+      foreignKey: "user_id",
+      as: "notifications",
+    });
+    User.hasMany(db.Post, {
+      foreignKey: "author_id",
+      as: "posts",
+    });
+    User.hasMany(db.Message, {
+      foreignKey: "user_id",
+      as: "messages",
+    });
+    User.hasMany(db.Conversation, {
+      foreignKey: "user_id",
+      as: "conversations",
+    });
+    User.hasMany(db.UserConversation, {
+      foreignKey: "user_id",
+      as: "conversationsMap",
+    });
+    User.hasMany(db.UserSkill, {
+      foreignKey: "user_id",
+      as: "skillMappings",
+    });
+    User.hasMany(db.UserBadge, {
+      foreignKey: "user_id",
+      as: "badgeMappings",
+    });
+    User.belongsToMany(db.Skill, {
+      through: db.UserSkill,
+      foreignKey: "user_id",
+      otherKey: "skill_id",
+      as: "skillList",
+    });
+
+    User.belongsToMany(db.Badge, {
+      through: db.UserBadge,
+      foreignKey: "user_id",
+      otherKey: "badge_id",
+      as: "badgeList",
+    });
   };
   return User;
 };

@@ -1,14 +1,56 @@
 const bcrypt = require("bcrypt");
 const otpGenerator = require("otp-generator");
-const { RefreshToken, User, Email } = require("@/models/index");
+const {
+  RefreshToken,
+  User,
+  Email,
+  Skill,
+  Badge,
+  UserSetting,
+} = require("@/models/index");
 const accessToken = require("@/utils/accessToken");
 const { Op } = require("sequelize");
+const generateUsernameFromEmail = require("@/utils/generateUsernameFromEmail");
 
 class authService {
   async auth(token) {
     const auth = accessToken.verify(token);
     if (!auth) return null;
-    const user = await User.findOne({ where: { id: auth.sub } });
+    const user = await User.findOne({
+      where: { id: auth.sub },
+      include: [
+        {
+          model: Skill,
+          as: "skillList",
+        },
+        {
+          model: Badge,
+          as: "badgeList",
+        },
+      ],
+      attributes: [
+        "id",
+        "email",
+        "username",
+        "full_name",
+        "first_name",
+        "last_name",
+        "avatar_url",
+        "cover_url",
+        "title",
+        "bio",
+        "post_count",
+        "follower_count",
+        "following_count",
+        "like_count",
+        "location",
+        "website",
+        "created_at",
+        "social",
+        "two_factor_enabled",
+        "verified_at",
+      ],
+    });
     return user;
   }
 
@@ -29,8 +71,32 @@ class authService {
   async register(data) {
     const saltRounds = 10;
     data.password = await bcrypt.hash(data.password, saltRounds);
+    if (!data.username) {
+      const username = await generateUsernameFromEmail(data);
+      data.username = username;
+    }
+    if (!data.full_name) {
+      const full_name = `${data.first_name} ${data.last_name}`;
+      data.full_name = full_name;
+    }
     const auth = await User.create(data);
+    await UserSetting.create({ user_id: auth.dataValues.id });
     return auth.dataValues;
+  }
+
+  async editProfile(userId, data) {
+    const user = await User.update(data, { where: { id: userId } });
+    return user.dataValues;
+  }
+
+  async userSetting(id) {
+    const userSetting = await UserSetting.findOne({ where: { user_id: id } });
+    return userSetting.dataValues;
+  }
+
+  async settings(id, data) {
+    const user = await UserSetting.update(data, { where: { user_id: id } });
+    return user.dataValues;
   }
 
   async sendForgotEmail(email) {
@@ -45,13 +111,26 @@ class authService {
       { password: newPassword },
       { where: { id } }
     );
-    return user;
+    return user.dataValues;
   }
 
-  //   async setNewPassword(id) {
-  //     const post = await authModel.setNewPassword(id);
-  //     return post;
-  //   }
+  async changePassword(userId, data) {
+    const { currentPassword, newPassword } = data;
+    const saltRounds = 10;
+    const currentPass = await bcrypt.hash(currentPassword, saltRounds);
+    const newPass = await bcrypt.hash(newPassword, saltRounds);
+
+    const curUser = await User.findOne({ where: { id: userId } });
+    if (curUser.dataValues.password != currentPass)
+      return Error("Mật khẩu không chính xác");
+
+    const userUpdated = await User.update(
+      { password: newPass },
+      { where: { id: userId } }
+    );
+    return userUpdated.dataValues;
+  }
+
   async sendCode(data) {
     //Tạo mã OTP
     const otp = otpGenerator.generate(6, {
@@ -90,19 +169,14 @@ class authService {
     return auth.dataValues;
   }
 
-  //   async resendVerifyEmail(id) {
-  //     const post = await authModel.resendVerifyEmail(id);
-  //     return post;
-  //   }
-
   async checkEmail(data) {
-    const auth = await User.findOne({
+    const exits = await User.findOne({
       where: { email: data.email },
     });
-    if (!auth) {
-      return null;
+    if (!exits) {
+      return false;
     }
-    return auth.dataValues;
+    return true;
   }
 
   async checkUsername(data) {

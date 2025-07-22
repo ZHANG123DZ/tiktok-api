@@ -40,6 +40,12 @@ module.exports = (sequelize, DataTypes) => {
         onUpdate: "CASCADE",
       },
 
+      like_count: {
+        type: DataTypes.BIGINT,
+        allowNull: true,
+        defaultValue: 0,
+      },
+
       deleted_at: {
         type: DataTypes.DATE(6),
         allowNull: true,
@@ -57,7 +63,25 @@ module.exports = (sequelize, DataTypes) => {
     }
   );
   Comment.associate = (db) => {
-    // Comment.belongsTo(db.Post);
+    Comment.belongsTo(db.Post, {
+      foreignKey: "post_id",
+      as: "post",
+    });
+
+    Comment.belongsTo(db.User, {
+      foreignKey: "user_id",
+      as: "author",
+    });
+
+    Comment.belongsTo(db.Comment, {
+      foreignKey: "parent_id",
+      as: "parent",
+    });
+
+    Comment.hasMany(db.Comment, {
+      foreignKey: "parent_id",
+      as: "replies",
+    });
   };
   return Comment;
 };

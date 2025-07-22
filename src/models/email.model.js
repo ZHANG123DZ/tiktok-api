@@ -37,8 +37,10 @@ module.exports = (sequelize, DataTypes) => {
     }
   );
   Email.associate = (db) => {
-    // Email.hasMany(db.Comment);
-    // Email.belongsTo(db.Topic);
+    Email.belongsTo(db.User, {
+      foreignKey: "user_id",
+      as: "user",
+    });
   };
   return Email;
 };

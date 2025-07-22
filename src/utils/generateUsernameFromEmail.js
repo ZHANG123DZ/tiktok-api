@@ -8,11 +8,15 @@ const generateUsernameFromEmail = async (data) => {
   let username = generated;
   let counter = 0;
   try {
-    let exists = await authService.checkUsername({ username });
+    let exists = await User.findOne({
+      where: { username },
+    });
     while (exists) {
       counter++;
       username = `${generated}${counter}`;
-      exists = await authService.checkUsername({ username });
+      exists = await User.findOne({
+        where: { username },
+      });
     }
     return username;
   } catch {

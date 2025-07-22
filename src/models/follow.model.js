@@ -33,9 +33,19 @@ module.exports = (sequelize, DataTypes) => {
       ],
     }
   );
-
   Follow.associate = (db) => {
-    // Follow.belongsTo(db.Post);
+    Follow.belongsTo(db.User, {
+      foreignKey: "user_id",
+      as: "user",
+    });
+    Follow.belongsTo(db.User, {
+      foreignKey: "follow_able_id",
+      as: "following",
+    });
+    Follow.belongsTo(db.Post, {
+      foreignKey: "follow_able_id",
+      as: "postsFollowing",
+    });
   };
   return Follow;
 };

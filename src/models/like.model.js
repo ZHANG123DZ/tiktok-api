@@ -34,7 +34,10 @@ module.exports = (sequelize, DataTypes) => {
     }
   );
   Like.associate = (db) => {
-    // Like.belongsTo(db.Post);
+    Like.belongsTo(db.User, {
+      foreignKey: "user_id",
+      as: "user",
+    });
   };
   return Like;
 };

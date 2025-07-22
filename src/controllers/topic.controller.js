@@ -10,8 +10,8 @@ const index = async (req, res) => {
 };
 
 const show = async (req, res) => {
-  const topic_name = req.params.topic_name;
-  const topic = await topicsService.getById(topic_name);
+  const slug = req.params.slug;
+  const topic = await topicsService.getById(slug);
 
   if (!topic) throwError(404, "Not Found.");
 
@@ -24,7 +24,8 @@ const store = async (req, res) => {
 };
 
 const update = async (req, res) => {
-  const topic = await topicsService.update(req.params.topic_name, req.body);
+  const slug = req.params.slug;
+  const topic = await topicsService.update(slug, req.body);
 
   if (!topic) throwError(404, "Not Found.");
 
@@ -32,7 +33,8 @@ const update = async (req, res) => {
 };
 
 const destroy = async (req, res) => {
-  const result = await topicsService.remove(req.params.topic_name);
+  const slug = req.params.slug;
+  const result = await topicsService.remove(slug);
 
   if (!result) throwError(404, "Not Found.");
 

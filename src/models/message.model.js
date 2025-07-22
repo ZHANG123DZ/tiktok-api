@@ -47,7 +47,14 @@ module.exports = (sequelize, DataTypes) => {
     }
   );
   Message.associate = (db) => {
-    // Message.belongsTo(db.Post);
+    Message.belongsTo(db.User, {
+      foreignKey: "user_id",
+      as: "sender",
+    });
+    Message.belongsTo(db.Conversation, {
+      foreignKey: "conversation_id",
+      as: "conversation",
+    });
   };
   return Message;
 };

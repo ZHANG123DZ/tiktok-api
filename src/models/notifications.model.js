@@ -1,3 +1,6 @@
+"use strict";
+
+/** @type {import('sequelize-cli').Migration} */
 module.exports = (sequelize, DataTypes) => {
   const Notification = sequelize.define(
     "Notification",
@@ -19,12 +22,6 @@ module.exports = (sequelize, DataTypes) => {
       notifiable_id: {
         type: DataTypes.BIGINT.UNSIGNED,
         allowNull: false,
-        references: {
-          model: "notifications",
-          key: "id",
-        },
-        onDelete: "CASCADE",
-        onUpdate: "CASCADE",
       },
       notifiable_type: {
         type: DataTypes.TEXT,
@@ -43,7 +40,10 @@ module.exports = (sequelize, DataTypes) => {
     }
   );
   Notification.associate = (db) => {
-    Notification.belongsTo(db.Post);
+    Notification.belongsTo(db.User, {
+      foreignKey: "user_id",
+      as: "user",
+    });
   };
   return Notification;
 };

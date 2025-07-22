@@ -9,6 +9,18 @@ const index = async (req, res) => {
   res.paginate({ items, total });
 };
 
+const featured = async (req, res) => {
+  const { page, limit } = req;
+  const { items, total } = await postsService.featured(page, limit);
+  res.paginate({ items, total });
+};
+
+const latest = async (req, res) => {
+  const { page, limit } = req;
+  const { items, total } = await postsService.latest(page, limit);
+  res.paginate({ items, total });
+};
+
 const show = async (req, res) => {
   const post = await postsService.getByKey(req.params.key);
   if (!post) throwError(404, "Not Found.");
@@ -37,4 +49,4 @@ const destroy = async (req, res) => {
   response.success(res, 204);
 };
 
-module.exports = { show, index, store, update, destroy };
+module.exports = { show, index, store, update, destroy, featured, latest };

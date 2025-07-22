@@ -17,76 +17,99 @@ module.exports = (sequelize, DataTypes) => {
       // Giao diện
       theme: {
         type: DataTypes.ENUM("dark", "light"),
-        allowNull: false,
-        defaultValue: "dark",
+        allowNull: true,
+        defaultValue: "light",
       },
       language: {
         type: DataTypes.STRING(100),
-        allowNull: false,
+        allowNull: true,
         defaultValue: "english",
       },
 
-      // Riêng tư
-      is_private: {
-        type: DataTypes.TINYINT(1),
-        allowNull: false,
-        defaultValue: 0,
-      },
-      muted: {
-        type: DataTypes.TINYINT(1),
-        allowNull: false,
-        defaultValue: 1,
+      profileVisibility: {
+        type: DataTypes.ENUM("public", "followers", "private"),
+        allowNull: true,
+        defaultValue: "public",
       },
 
-      // Quyền chia sẻ video
-      allow_comments: {
+      defaultPostVisibility: {
+        type: DataTypes.ENUM("public", "private", "draft"),
+        allowNull: true,
+        defaultValue: "public",
+      },
+      requireCommentApproval: {
         type: DataTypes.TINYINT(1),
-        allowNull: false,
+        allowNull: true,
+        defaultValue: 0,
+      },
+      twoFactorEnabled: {
+        type: DataTypes.TINYINT(1),
+        allowNull: true,
+        defaultValue: 0,
+      },
+      // Riêng tư
+      requireCommentApproval: {
+        type: DataTypes.TINYINT(1),
+        allowNull: true,
+        defaultValue: 0,
+      },
+      allowDirectMessages: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        defaultValue: "everyone",
+      },
+      allowComments: {
+        type: DataTypes.TINYINT(1),
+        allowNull: true,
         defaultValue: 1,
       },
-      allow_downloads: {
+      searchEngineIndexing: {
         type: DataTypes.TINYINT(1),
-        allowNull: false,
+        allowNull: true,
         defaultValue: 1,
       },
-      allow_duet: {
+      showViewCounts: {
         type: DataTypes.TINYINT(1),
-        allowNull: false,
+        allowNull: true,
         defaultValue: 1,
       },
-      allow_stitch: {
+      showEmail: {
         type: DataTypes.TINYINT(1),
-        allowNull: false,
+        allowNull: true,
         defaultValue: 1,
       },
 
       // Thông báo
-      notify_likes: {
+      emailNewLikes: {
         type: DataTypes.TINYINT(1),
-        allowNull: false,
-        defaultValue: 1,
-      },
-      notify_comments: {
-        type: DataTypes.TINYINT(1),
-        allowNull: false,
-        defaultValue: 1,
-      },
-      notify_new_followers: {
-        type: DataTypes.TINYINT(1),
-        allowNull: false,
-        defaultValue: 1,
-      },
-
-      // Timestamp
-      deleted_at: {
-        type: DataTypes.DATE(6),
         allowNull: true,
+        defaultValue: 1,
+      },
+      emailNewComments: {
+        type: DataTypes.TINYINT(1),
+        allowNull: true,
+        defaultValue: 1,
+      },
+      emailNewFollowers: {
+        type: DataTypes.TINYINT(1),
+        allowNull: true,
+        defaultValue: 1,
+      },
+      emailWeeklyDigest: {
+        type: DataTypes.TINYINT(1),
+        allowNull: true,
+        defaultValue: 1,
+      },
+      pushNotifications: {
+        type: DataTypes.TINYINT(1),
+        allowNull: true,
+        defaultValue: 1,
       },
     },
     {
       tableName: "user_settings",
       timestamps: true,
-      underscored: true,
+      underscored: false,
       charset: "utf8",
       collate: "utf8_general_ci",
       engine: "InnoDB",
@@ -95,7 +118,10 @@ module.exports = (sequelize, DataTypes) => {
     }
   );
   UserSetting.associate = (db) => {
-    UserSetting.belongsTo(db.Post);
+    UserSetting.belongsTo(db.User, {
+      foreignKey: "user_id",
+      as: "user",
+    });
   };
   return UserSetting;
 };

@@ -6,16 +6,24 @@ class TopicsService {
     const offset = (page - 1) * limit;
 
     const { rows: items, count: total } = await Topic.findAndCountAll({
-      include: Post,
       limit,
       offset,
+      order: [["created_at", "DESC"]],
     });
 
     return { items, total };
   }
 
-  async getById(topic_name) {
-    const topic = await Topic.findOne({ where: { topic_name }, include: Post });
+  async getById(slug) {
+    const topic = await Topic.findOne({
+      where: { slug },
+      include: [
+        {
+          model: Post,
+          as: "posts",
+        },
+      ],
+    });
     return topic;
   }
 
@@ -24,17 +32,17 @@ class TopicsService {
     return topic;
   }
 
-  async update(topic_name, data) {
+  async update(slug, data) {
     const topic = await Topic.update(data, {
       where: {
-        topic_name,
+        slug,
       },
     });
     return topic;
   }
 
-  async remove(topic_name) {
-    const topic = await Topic.destroy({ where: { topic_name } });
+  async remove(slug) {
+    const topic = await Topic.destroy({ where: { slug } });
     return topic;
   }
 }

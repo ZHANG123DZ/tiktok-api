@@ -4,7 +4,8 @@ const response = require("@/utils/response");
 const throwError = require("@/utils/throwError");
 
 const index = async (req, res) => {
-  const { items, total } = await usersService.getAll();
+  const { page, limit } = req;
+  const { items, total } = await usersService.getAll(page, limit);
   res.paginate({ items, total });
 };
 
@@ -17,6 +18,17 @@ const show = async (req, res) => {
     console.log(error);
     response.error(res, 404, "Không tìm thấy người dùng này");
   }
+};
+
+const getUserPosts = async (req, res) => {
+  const username = req.params.key;
+  const { page, limit } = req;
+  const { items, total } = await usersService.getUserPosts(
+    username,
+    page,
+    limit
+  );
+  res.paginate({ items, total });
 };
 
 const store = async (req, res) => {
@@ -40,4 +52,4 @@ const destroy = async (req, res) => {
   response.success(res, 204);
 };
 
-module.exports = { show, index, store, update, destroy };
+module.exports = { show, index, store, update, destroy, getUserPosts };

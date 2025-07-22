@@ -1,13 +1,14 @@
 const express = require("express");
 const topicsController = require("@/controllers/topic.controller");
+const authJWT = require("@/middlewares/authJWT");
 
 const router = express.Router();
 
 router.get("/", topicsController.index);
-router.get("/:topic_name", topicsController.show);
-router.post("/", topicsController.store);
-router.put("/:topic_name", topicsController.update);
-router.patch("/:topic_name", topicsController.update);
-router.delete("/:topic_name", topicsController.destroy);
+router.get("/:slug", topicsController.show);
+router.post("/", authJWT, topicsController.store);
+router.put("/:slug", authJWT, topicsController.update);
+router.patch("/:slug", authJWT, topicsController.update);
+router.delete("/:slug", authJWT, topicsController.destroy);
 
 module.exports = router;

@@ -30,7 +30,7 @@ module.exports = (sequelize, DataTypes) => {
       },
     },
     {
-      tableName: "emails",
+      tableName: "user_conversations",
       timestamps: true,
       underscored: true,
       charset: "utf8",
@@ -41,7 +41,14 @@ module.exports = (sequelize, DataTypes) => {
     }
   );
   UserConversation.associate = (db) => {
-    // UserConversation.belongsTo(db.Post);
+    UserConversation.belongsTo(db.User, {
+      foreignKey: "user_id",
+      as: "user",
+    });
+    UserConversation.belongsTo(db.Conversation, {
+      foreignKey: "conversation_id",
+      as: "conversation",
+    });
   };
   return UserConversation;
 };

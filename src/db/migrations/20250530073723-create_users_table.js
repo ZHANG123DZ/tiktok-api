@@ -70,12 +70,12 @@ module.exports = {
           type: Sequelize.TEXT,
           allowNull: true,
         },
-        posts_count: {
+        post_count: {
           type: Sequelize.BIGINT,
           defaultValue: 0,
           allowNull: true,
         },
-        followers_count: {
+        follower_count: {
           type: Sequelize.BIGINT,
           defaultValue: 0,
           allowNull: true,
@@ -85,7 +85,7 @@ module.exports = {
           defaultValue: 0,
           allowNull: true,
         },
-        likes_count: {
+        like_count: {
           type: Sequelize.BIGINT,
           defaultValue: 0,
           allowNull: true,
@@ -113,14 +113,6 @@ module.exports = {
         },
         website: {
           type: Sequelize.STRING(255),
-          allowNull: true,
-        },
-        skills: {
-          type: Sequelize.TEXT,
-          allowNull: true,
-        },
-        badges: {
-          type: Sequelize.TEXT,
           allowNull: true,
         },
         two_factor_enabled: {

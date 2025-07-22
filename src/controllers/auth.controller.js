@@ -1,20 +1,15 @@
 const response = require("@/utils/response");
-const throwError = require("@/utils/throwError");
 
 const authService = require("@/services/auth.service");
 const { createCookie, readCookie } = require("@/utils/cookie");
 const accessToken = require("@/utils/accessToken");
 
-const transporter = require("@/configs/mail");
-const loadEmail = require("@/utils/loadEmail");
 const queue = require("@/utils/queue");
-const { default: slugify } = require("slugify");
-const generateUsernameFromEmail = require("@/utils/generateUsernameFromEmail");
 const emailToken = require("@/utils/emailToken");
 const usersService = require("@/services/user.service");
 const forgotPasswordToken = require("@/utils/forgotPasswordToken");
 
-exports.auth = async (req, res) => {
+const auth = async (req, res) => {
   try {
     const token = readCookie(req, "token");
     if (!token) {
@@ -25,13 +20,13 @@ exports.auth = async (req, res) => {
     if (!user) {
       return response.error(res, 401, "Token không hợp lệ hoặc hết hạn");
     }
-    response.success(res, 200, user);
+    return response.success(res, 200, user);
   } catch (error) {
     return response.error(res, 401, "Không xác thực được người dùng này");
   }
 };
 
-exports.refreshToken = async (req, res) => {
+const refreshToken = async (req, res) => {
   try {
     const auth = await authService.refreshToken(req.body);
     const user_agent = req.headers["user_agent"];
@@ -42,13 +37,13 @@ exports.refreshToken = async (req, res) => {
       response.error(res, 500, "Không tạo được token vui lòng đăng nhập lại");
     }
     createCookie(res, "token", token);
-    response.success(res, 200, auth);
+    return response.success(res, 200, auth);
   } catch (error) {
-    response.error(res, 401, "Refresh token that bai");
+    return response.error(res, 401, "Refresh token that bai");
   }
 };
 
-exports.login = async (req, res) => {
+const login = async (req, res) => {
   try {
     const user = await authService.login(req.body);
     const token = accessToken.create({ sub: user.id });
@@ -61,13 +56,13 @@ exports.login = async (req, res) => {
     }
 
     createCookie(res, "token", token);
-    response.success(res, 200, user);
+    return response.success(res, 200, user);
   } catch (error) {
-    response.error(res, 401, "Dang nhap that bai");
+    return response.error(res, 401, "Dang nhap that bai");
   }
 };
 
-exports.checkUsername = async (req, res) => {
+const checkUsername = async (req, res) => {
   const data = req.body;
 
   const auth = await authService.checkUsername(data);
@@ -77,14 +72,10 @@ exports.checkUsername = async (req, res) => {
   response.error(res, 409);
 };
 
-exports.register = async (req, res) => {
+const register = async (req, res) => {
   const { ...data } = req.body;
   try {
     //auto generate userID
-    if (!data.username) {
-      const username = await generateUsernameFromEmail(data);
-      data.username = username;
-    }
     const user = await authService.register(data);
     const token = accessToken.create({ sub: user.id });
     if (!token) {
@@ -103,7 +94,7 @@ exports.register = async (req, res) => {
   }
 };
 
-exports.sendForgotEmail = async (req, res) => {
+const sendForgotEmail = async (req, res) => {
   const data = req.body;
   try {
     const user = await authService.sendForgotEmail(data.email);
@@ -121,7 +112,7 @@ exports.sendForgotEmail = async (req, res) => {
   }
 };
 
-exports.resetPassword = async (req, res) => {
+const resetPassword = async (req, res) => {
   const data = req.body;
 
   if (!data) {
@@ -138,20 +129,58 @@ exports.resetPassword = async (req, res) => {
   }
 };
 
-// exports.showNewPasswordForm = async (req, res) => {
-//   res.render('admin/auth/new-password', { layout: false });
-// };
+const changePassword = async (req, res) => {
+  const data = req.body;
+  const userId = req.user.id;
+  try {
+    const result = await authService.changePassword(userId, data);
+    return response.success(res, 200, result);
+  } catch (error) {
+    console.log(error);
+    response.error(res, 401, error);
+  }
+};
 
-// exports.setNewPassword = async (req, res) => {
-//   const loginData = await authService.setNewPassword();
-//   res.redirect('/admin/new-password');
-// };
+const editProfile = async (req, res) => {
+  const user = req.user;
+  const userId = user.id;
+  const data = req.body;
 
-// exports.showVerifyNotice = async (req, res) => {
-//   res.render('admin/auth/verify-email', { layout: false });
-// };
+  try {
+    const result = await authService.editProfile(userId, data);
+    return response.success(res, 200, result);
+  } catch (error) {
+    console.log(error);
+    return response.error(res, 401, error);
+  }
+};
 
-exports.sendCode = async (req, res) => {
+const userSetting = async (req, res) => {
+  const user = req.user;
+
+  try {
+    const result = await authService.userSetting(user.id);
+    return response.success(res, 200, result);
+  } catch (error) {
+    console.log(error);
+    return response.error(res, 401, error);
+  }
+};
+
+const settings = async (req, res) => {
+  const user = req.user;
+  const data = req.body;
+
+  try {
+    const result = await authService.settings(user.id, data);
+    return response.success(res, 200, result);
+  } catch (error) {
+    console.log(error);
+    return response.error(res, 401, error);
+  }
+};
+
+const sendCode = async (req, res) => {
   const data = req.body;
   try {
     const auth = await authService.sendCode(data);
@@ -165,7 +194,7 @@ exports.sendCode = async (req, res) => {
   }
 };
 //
-exports.verifyEmail = async (req, res) => {
+const verifyEmail = async (req, res) => {
   const { token } = req.body;
   if (!token) {
     return response.error(res, 400, "Thiếu mã xác thực");
@@ -181,36 +210,38 @@ exports.verifyEmail = async (req, res) => {
   }
 };
 
-// exports.verifyEmail = async (req, res) => {
-//   const data = req.body;
-//   try {
-//     const auth = await authService.verifyEmail(data);
-//     if (auth.otp_code !== data.code) {
-//       response.error(res, 401);
-//     }
-//     if (auth.expired_at && new Date() > new Date(auth.expired_at)) {
-//       response.error(res, 401);
-//     }
-//     response.success(res, 200, auth);
-//   } catch (error) {
-//     response.error(res, 401, error);
-//   }
-// };
-
-exports.checkEmail = async (req, res) => {
+const checkEmail = async (req, res) => {
   const data = req.body;
-
-  const auth = await authService.checkEmail(data);
-  if (auth) {
+  try {
+    const auth = await authService.checkEmail(data);
     return response.success(res, 200, auth);
+  } catch (error) {
+    return response.error(res, 409, error);
   }
-  response.error(res, 409);
 };
 
-exports.logout = async (req, res) => {
+const logout = async (req, res) => {
   const token = readCookie(req, "token");
   const data = await authService.auth(token);
   const newToken = accessToken.create(data, { expiresIn: "1s" });
   createCookie(res, "token", newToken, { maxAge: 1000 });
   response.success(res, 200);
+};
+
+module.exports = {
+  login,
+  register,
+  logout,
+  verifyEmail,
+  checkEmail,
+  checkUsername,
+  editProfile,
+  changePassword,
+  settings,
+  userSetting,
+  resetPassword,
+  auth,
+  sendCode,
+  sendForgotEmail,
+  refreshToken,
 };

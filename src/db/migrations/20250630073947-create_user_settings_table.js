@@ -1,98 +1,125 @@
-'use strict';
+"use strict";
 
 /** @type {import('sequelize-cli').Migration} */
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     await queryInterface.createTable(
-      'user_settings',
+      "user_settings",
       {
         user_id: {
           type: Sequelize.BIGINT.UNSIGNED,
           allowNull: false,
           primaryKey: true,
           references: {
-            model: 'users',
-            key: 'id',
+            model: "users",
+            key: "id",
           },
-          onDelete: 'CASCADE',
-          onUpdate: 'CASCADE',
+          onDelete: "CASCADE",
+          onUpdate: "CASCADE",
         },
 
         // Giao diện
         theme: {
-          type: Sequelize.ENUM('dark', 'light'),
-          allowNull: false,
-          defaultValue: 'dark',
+          type: Sequelize.ENUM("dark", "light"),
+          allowNull: true,
+          defaultValue: "light",
         },
         language: {
           type: Sequelize.STRING(100),
-          allowNull: false,
-          defaultValue: 'english',
+          allowNull: true,
+          defaultValue: "english",
+        },
+        profileVisibility: {
+          type: Sequelize.ENUM("public", "followers", "private"),
+          allowNull: true,
+          defaultValue: "public",
         },
 
-        // Riêng tư
-        is_private: {
+        defaultPostVisibility: {
+          type: Sequelize.ENUM("public", "private", "draft"),
+          allowNull: true,
+          defaultValue: "public",
+        },
+        requireCommentApproval: {
           type: Sequelize.TINYINT(1),
-          allowNull: false,
+          allowNull: true,
           defaultValue: 0,
         },
-        muted: {
+        twoFactorEnabled: {
           type: Sequelize.TINYINT(1),
-          allowNull: false,
+          allowNull: true,
+          defaultValue: 0,
+        },
+        // Riêng tư
+        requireCommentApproval: {
+          type: Sequelize.TINYINT(1),
+          allowNull: true,
+          defaultValue: 0,
+        },
+        allowDirectMessages: {
+          type: Sequelize.STRING(100),
+          allowNull: true,
+          defaultValue: "everyone",
+        },
+        allowComments: {
+          type: Sequelize.TINYINT(1),
+          allowNull: true,
           defaultValue: 1,
         },
-
-        // Quyền chia sẻ video
-        allow_comments: {
+        searchEngineIndexing: {
           type: Sequelize.TINYINT(1),
-          allowNull: false,
+          allowNull: true,
           defaultValue: 1,
         },
-        allow_downloads: {
+        showViewCounts: {
           type: Sequelize.TINYINT(1),
-          allowNull: false,
+          allowNull: true,
           defaultValue: 1,
         },
-        allow_duet: {
+        showEmail: {
           type: Sequelize.TINYINT(1),
-          allowNull: false,
-          defaultValue: 1,
-        },
-        allow_stitch: {
-          type: Sequelize.TINYINT(1),
-          allowNull: false,
+          allowNull: true,
           defaultValue: 1,
         },
 
         // Thông báo
-        notify_likes: {
+        emailNewLikes: {
           type: Sequelize.TINYINT(1),
-          allowNull: false,
+          allowNull: true,
           defaultValue: 1,
         },
-        notify_comments: {
+        emailNewComments: {
           type: Sequelize.TINYINT(1),
-          allowNull: false,
+          allowNull: true,
           defaultValue: 1,
         },
-        notify_new_followers: {
+        emailNewFollowers: {
           type: Sequelize.TINYINT(1),
-          allowNull: false,
+          allowNull: true,
           defaultValue: 1,
         },
-
+        emailWeeklyDigest: {
+          type: Sequelize.TINYINT(1),
+          allowNull: true,
+          defaultValue: 1,
+        },
+        pushNotifications: {
+          type: Sequelize.TINYINT(1),
+          allowNull: true,
+          defaultValue: 1,
+        },
         // Timestamp
         created_at: {
           type: Sequelize.DATE,
           allowNull: false,
-          defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
+          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
         },
         updated_at: {
           type: Sequelize.DATE(6),
           allowNull: false,
-          defaultValue: Sequelize.literal('CURRENT_TIMESTAMP(6)'),
-          onUpdate: Sequelize.literal('CURRENT_TIMESTAMP(6)'),
+          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP(6)"),
+          onUpdate: Sequelize.literal("CURRENT_TIMESTAMP(6)"),
         },
         deleted_at: {
           type: Sequelize.DATE(6),
@@ -101,15 +128,14 @@ module.exports = {
       },
       {
         timestamps: true,
-        underscored: true,
-        charset: 'utf8',
-        collate: 'utf8_general_ci',
-        engine: 'InnoDB',
+        charset: "utf8",
+        collate: "utf8_general_ci",
+        engine: "InnoDB",
       }
     );
   },
 
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.dropTable('user_settings');
+    await queryInterface.dropTable("user_settings");
   },
 };

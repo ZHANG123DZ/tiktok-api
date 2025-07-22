@@ -16,11 +16,14 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.TEXT,
         allowNull: true,
       },
+      excerpt: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
       description: {
         type: DataTypes.TEXT,
         allowNull: true,
       },
-
       author_id: {
         type: DataTypes.BIGINT.UNSIGNED,
         allowNull: false,
@@ -32,6 +35,14 @@ module.exports = (sequelize, DataTypes) => {
         onUpdate: "CASCADE",
       },
       author_name: {
+        type: DataTypes.STRING(191),
+        allowNull: true,
+      },
+      author_username: {
+        type: DataTypes.STRING(191),
+        allowNull: true,
+      },
+      author_avatar: {
         type: DataTypes.STRING(191),
         allowNull: true,
       },
@@ -50,22 +61,22 @@ module.exports = (sequelize, DataTypes) => {
         defaultValue: "draft",
         allowNull: true,
       },
-      views_count: {
+      view_count: {
         type: DataTypes.BIGINT.UNSIGNED,
         allowNull: true,
         defaultValue: 0,
       },
-      likes_count: {
+      like_count: {
         type: DataTypes.BIGINT.UNSIGNED,
         allowNull: true,
         defaultValue: 0,
       },
-      comments_count: {
+      comment_count: {
         type: DataTypes.BIGINT.UNSIGNED,
         allowNull: true,
         defaultValue: 0,
       },
-      reports_count: {
+      report_count: {
         type: DataTypes.BIGINT.UNSIGNED,
         allowNull: true,
         defaultValue: 0,
@@ -139,7 +150,32 @@ module.exports = (sequelize, DataTypes) => {
     }
   );
   Post.associate = (db) => {
-    // Post.belongsTo(db.Post);
+    Post.belongsTo(db.User, {
+      foreignKey: "author_id",
+      as: "author",
+    });
+    Post.belongsToMany(db.Topic, {
+      through: db.PostTopic,
+      foreignKey: "post_id",
+      as: "topics",
+    });
+    Post.hasMany(db.PostTopic, {
+      foreignKey: "post_id",
+      as: "postTopics",
+    });
+    Post.belongsToMany(db.Tag, {
+      through: db.PostTag,
+      foreignKey: "post_id",
+      as: "tags",
+    });
+    Post.hasMany(db.PostTag, {
+      foreignKey: "post_id",
+      as: "postTags",
+    });
+    Post.hasMany(db.Comment, {
+      foreignKey: "post_id",
+      as: "comments",
+    });
   };
   return Post;
 };

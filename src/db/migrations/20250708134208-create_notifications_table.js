@@ -33,12 +33,6 @@ module.exports = {
       notifiable_id: {
         type: Sequelize.BIGINT.UNSIGNED,
         allowNull: false,
-        references: {
-          model: "notifications",
-          key: "id",
-        },
-        onDelete: "CASCADE",
-        onUpdate: "CASCADE",
       },
       notifiable_type: {
         type: Sequelize.TEXT,

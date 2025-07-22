@@ -31,8 +31,5 @@ module.exports = (sequelize, DataTypes) => {
       updatedAt: "updated_at",
     }
   );
-  Queue.associate = (db) => {
-    // Queue.belongsTo(db.Post);
-  };
   return Queue;
 };
