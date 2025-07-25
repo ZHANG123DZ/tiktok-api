@@ -15,6 +15,13 @@ const featured = async (req, res) => {
   res.paginate({ items, total });
 };
 
+const related = async (req, res) => {
+  const { page, limit } = req;
+  const preTopics = req.body.topics;
+  const { items, total } = await postsService.related(page, limit, preTopics);
+  res.paginate({ items, total });
+};
+
 const latest = async (req, res) => {
   const { page, limit } = req;
   const { items, total } = await postsService.latest(page, limit);
@@ -29,7 +36,8 @@ const show = async (req, res) => {
 };
 
 const store = async (req, res) => {
-  const post = await postsService.create(req.body);
+  const user = req.user;
+  const post = await postsService.create(req.body, user);
   response.success(res, 201, post);
 };
 
@@ -49,4 +57,13 @@ const destroy = async (req, res) => {
   response.success(res, 204);
 };
 
-module.exports = { show, index, store, update, destroy, featured, latest };
+module.exports = {
+  show,
+  index,
+  store,
+  update,
+  destroy,
+  featured,
+  related,
+  latest,
+};

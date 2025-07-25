@@ -27,9 +27,18 @@ module.exports = {
     }
 
     await queryInterface.bulkInsert("post_tags", postTags);
+    await queryInterface.sequelize.query(`
+      UPDATE tags
+      SET post_count = (
+        SELECT COUNT(*) FROM post_tags WHERE tag_id = tags.id
+      )
+    `);
   },
 
   async down(queryInterface, Sequelize) {
     await queryInterface.bulkDelete("post_tags", null, {});
+    await queryInterface.sequelize.query(`
+      UPDATE tags SET post_count = 0
+    `);
   },
 };

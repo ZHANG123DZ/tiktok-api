@@ -30,14 +30,16 @@ class CommentsService {
     const commentIds = rawComments.map((c) => c.id);
     let likedSet = new Set();
     if (commentIds.length > 0) {
-      const liked = await Like.findAll({
-        where: {
-          user_id: currentUserId,
-          like_able_id: commentIds,
-          like_able_type: "comment",
-        },
-      });
-      likedSet = new Set(liked.map((l) => l.like_able_id));
+      if (currentUserId) {
+        const liked = await Like.findAll({
+          where: {
+            user_id: currentUserId,
+            like_able_id: commentIds,
+            like_able_type: "comment",
+          },
+        });
+        likedSet = new Set(liked.map((l) => l.like_able_id));
+      }
     }
 
     function buildCommentTree(comments, parentId = null) {

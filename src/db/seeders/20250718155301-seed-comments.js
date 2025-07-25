@@ -26,7 +26,7 @@ module.exports = {
         user_id: user.id,
         content: faker.lorem.sentences(3),
         parent_id: null,
-        like_count: faker.number.int({ min: 0, max: 5000 }),
+        like_count: faker.number.int({ min: 0, max: 300 }),
         created_at: faker.date.recent({ days: 30 }),
         updated_at: new Date(),
       });
@@ -61,9 +61,22 @@ module.exports = {
     if (replies.length) {
       await queryInterface.bulkInsert("comments", replies);
     }
+
+    /* -------- 3. Cập nhật comment_count của mỗi post -------- */
+    await queryInterface.sequelize.query(`
+      UPDATE posts
+      SET comment_count = (
+        SELECT COUNT(*)
+        FROM comments
+        WHERE comments.post_id = posts.id
+      )
+    `);
   },
 
   async down(queryInterface) {
     await queryInterface.bulkDelete("comments", null);
+
+    // Reset comment_count về 0
+    await queryInterface.sequelize.query(`UPDATE posts SET comment_count = 0`);
   },
 };

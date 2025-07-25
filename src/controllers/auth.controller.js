@@ -87,10 +87,10 @@ const register = async (req, res) => {
     });
 
     createCookie(res, "token", token);
-    response.success(res, 200, user);
+    return response.success(res, 200, user);
   } catch (error) {
     console.log(error);
-    response.error(res, 401, "Dang ky that bai");
+    return response.error(res, 401, "Dang ky that bai");
   }
 };
 

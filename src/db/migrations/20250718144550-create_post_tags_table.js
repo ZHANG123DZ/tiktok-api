@@ -9,13 +9,11 @@ module.exports = {
       {
         id: {
           type: Sequelize.BIGINT.UNSIGNED,
-          allowNull: false,
           autoIncrement: true,
           primaryKey: true,
         },
         post_id: {
           type: Sequelize.BIGINT.UNSIGNED,
-          allowNull: false,
           references: {
             model: "posts",
             key: "id",
@@ -25,7 +23,6 @@ module.exports = {
         },
         tag_id: {
           type: Sequelize.BIGINT.UNSIGNED,
-          allowNull: false,
           references: {
             model: "tags",
             key: "id",
@@ -35,14 +32,10 @@ module.exports = {
         },
         created_at: {
           type: Sequelize.DATE(6),
-          allowNull: false,
-          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP(6)"),
         },
 
         updated_at: {
           type: Sequelize.DATE(6),
-          allowNull: false,
-          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP(6)"),
           onUpdate: Sequelize.literal("CURRENT_TIMESTAMP(6)"),
         },
       },

@@ -67,9 +67,9 @@ module.exports = {
         meta_description: faker.lorem.sentence(),
         status: faker.helpers.arrayElement(["published", "draft", "pending"]),
         view_count: faker.number.int({ min: 0, max: 5000 }),
-        like_count: faker.number.int({ min: 0, max: 1000 }),
-        comment_count: faker.number.int({ min: 0, max: 500 }),
-        report_count: faker.number.int({ min: 0, max: 20 }),
+        like_count: 0,
+        comment_count: 0,
+        report_count: 0,
         language: faker.helpers.arrayElement(["en", "vi"]),
         visibility: faker.helpers.arrayElement(["public", "private"]),
         moderation_status: faker.helpers.arrayElement([
@@ -101,9 +101,21 @@ module.exports = {
     }
 
     await queryInterface.bulkInsert("posts", posts);
+
+    // 4. Cập nhật post_count cho bảng users
+    await queryInterface.sequelize.query(`
+      UPDATE users u
+      SET post_count = (
+        SELECT COUNT(*)
+        FROM posts p
+        WHERE p.author_id = u.id
+      )
+    `);
   },
 
   async down(queryInterface) {
     await queryInterface.bulkDelete("posts", null, {});
+    // Reset post_count về 0 nếu cần
+    await queryInterface.sequelize.query(`UPDATE users SET post_count = 0`);
   },
 };

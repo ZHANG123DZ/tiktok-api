@@ -34,6 +34,31 @@ class PostsService {
     return { items, total };
   }
 
+  async related(page, limit, prevTopics) {
+    const offset = (page - 1) * limit;
+
+    const { rows: items, count: total } = await Post.findAndCountAll({
+      include: [
+        {
+          model: Topic,
+          as: "topics",
+          where: {
+            name: {
+              [Op.in]: prevTopics,
+            },
+          },
+          required: true,
+        },
+      ],
+      limit,
+      offset,
+      order: [["created_at", "DESC"]],
+      distinct: true,
+    });
+
+    return { items, total };
+  }
+
   async latest(page, limit) {
     const offset = (page - 1) * limit;
 
@@ -98,13 +123,18 @@ class PostsService {
     return post;
   }
 
-  async create(data) {
+  async create(data, user) {
     const toSlug = (title) => {
       return `${slugify(title, { lower: true, strict: true })}-${nanoid(6)}`;
     };
     if (!data.slug) {
       data.slug = toSlug(data.title);
     }
+    data.author_id = user.id;
+    data.author_name = user.full_name;
+    data.author_username = user.username;
+    data.author_avatar = user.avatar_url;
+
     const post = await Post.create(data);
     return post;
   }

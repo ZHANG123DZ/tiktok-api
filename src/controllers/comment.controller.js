@@ -5,7 +5,7 @@ const throwError = require("@/utils/throwError");
 
 const index = async (req, res) => {
   const slug = req.params.slug;
-  const currentUserId = req.user.id;
+  const currentUserId = req.user?.id;
   const comments = await commentsService.getPostComment(slug, currentUserId);
   response.success(res, 200, comments);
 };

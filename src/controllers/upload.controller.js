@@ -1,25 +1,18 @@
-const mediaService = require("@/services/media.service");
-
 const response = require("@/utils/response");
 const throwError = require("@/utils/throwError");
-
-const getPublicIdFromUrl = async (req, res) => {
-  const url = req.params.url;
-  const media = await mediaService.getPublicIdFromUrl(url);
-  response.success(res, 200, media);
-};
+const uploadService = require("@/services/upload.service");
 
 const uploadSingleFile = async (req, res) => {
-  const user = req.user;
-
   try {
+    const user = req.user;
+
     if (!req.files) {
       return response.error(res, 400, "No file uploaded");
     }
     const file = req.files[0];
-    const folder = req.body.folder || "uploads";
-    const result = await mediaService.uploadSingleFile(file, folder, user);
-    return response.success(res, 200, result);
+    const folder = req.body.folder || "";
+    const fileResult = await uploadService.uploadSingle(file, folder, user);
+    return response.success(res, 200, fileResult);
   } catch (error) {
     return response.error(res, 500, error);
   }
@@ -42,7 +35,7 @@ const uploadMultipleFiles = async (req, res) => {
   try {
     const { folder = "uploads" } = req.body;
 
-    const uploadResults = await mediaService.uploadMulti(
+    const uploadResults = await uploadService.uploadMultiple(
       filesToProcess,
       folder,
       user
@@ -70,7 +63,7 @@ const replace = async (req, res) => {
     const folder = req.body.folder || "uploads";
     const oldUrl = req.body.oldUrl;
 
-    const result = await mediaService.replace(file, oldUrl, folder, user);
+    const result = await uploadService.replaceFile(file, oldUrl, folder, user);
 
     return response.success(res, 200, result);
   } catch (error) {
@@ -78,19 +71,18 @@ const replace = async (req, res) => {
   }
 };
 
-const del = async (req, res) => {
+const deleteFile = async (req, res) => {
   const user = req.user;
-  const resourceType = req.body.resourceType;
-  //Tạo thêm bảng media_files có url file, type, author_id
-  const result = await mediaService.del(url, resourceType, user);
+  const url = req.params.url;
+
+  const result = await uploadService.deleteFile(url, user);
   if (!result) throwError(404, "Not Found.");
   response.success(res, 204);
 };
 
 module.exports = {
-  getPublicIdFromUrl,
   uploadMultipleFiles,
-  del,
+  deleteFile,
   uploadSingleFile,
   replace,
 };

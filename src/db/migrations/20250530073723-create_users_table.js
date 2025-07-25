@@ -25,95 +25,74 @@ module.exports = {
         },
         email: {
           type: Sequelize.STRING(100),
-          allowNull: true,
           unique: true,
         },
         phone: {
           type: Sequelize.STRING(20),
-          allowNull: true,
           unique: true,
         },
         password: {
           type: Sequelize.STRING(255),
-          allowNull: true,
           defaultValue: null,
         },
         full_name: {
           type: Sequelize.STRING(191),
-          allowNull: true,
         },
         first_name: {
           type: Sequelize.STRING(100),
-          allowNull: true,
         },
         last_name: {
           type: Sequelize.STRING(100),
-          allowNull: true,
         },
         avatar_url: {
           type: Sequelize.STRING(191),
-          allowNull: true,
         },
         cover_url: {
           type: Sequelize.STRING(255),
-          allowNull: true,
         },
         title: {
           type: Sequelize.STRING(255),
-          allowNull: true,
         },
         bio: {
           type: Sequelize.TEXT,
-          allowNull: true,
         },
         social: {
           type: Sequelize.TEXT,
-          allowNull: true,
         },
         post_count: {
           type: Sequelize.BIGINT,
           defaultValue: 0,
-          allowNull: true,
         },
         follower_count: {
           type: Sequelize.BIGINT,
           defaultValue: 0,
-          allowNull: true,
         },
         following_count: {
           type: Sequelize.BIGINT,
           defaultValue: 0,
-          allowNull: true,
         },
         like_count: {
           type: Sequelize.BIGINT,
           defaultValue: 0,
-          allowNull: true,
         },
         gender: {
           type: Sequelize.ENUM("male", "female", "other"),
-          allowNull: true,
         },
         birthday: {
           type: Sequelize.DATEONLY,
-          allowNull: true,
         },
         role: {
           type: Sequelize.ENUM("user", "admin"),
-          allowNull: true,
         },
         status: {
           type: Sequelize.ENUM("active", "inactive", "banned"),
-          allowNull: true,
           defaultValue: "active",
         },
         location: {
           type: Sequelize.STRING(100),
-          allowNull: true,
         },
         website: {
           type: Sequelize.STRING(255),
-          allowNull: true,
         },
         two_factor_enabled: {
           type: Sequelize.BOOLEAN,
@@ -121,34 +100,27 @@ module.exports = {
         },
         login_provider: {
           type: Sequelize.STRING(100),
-          allowNull: true,
         },
         last_login_at: {
           type: Sequelize.DATE(6),
-          allowNull: true,
         },
         email_sent_at: {
           type: Sequelize.DATE(6),
-          allowNull: true,
         },
         verified_at: {
           type: Sequelize.DATE(6),
-          allowNull: true,
         },
         created_at: {
           type: Sequelize.DATE(6),
-          allowNull: false,
           defaultValue: Sequelize.literal("CURRENT_TIMESTAMP(6)"),
         },
         updated_at: {
           type: Sequelize.DATE(6),
-          allowNull: false,
           defaultValue: Sequelize.literal("CURRENT_TIMESTAMP(6)"),
           onUpdate: Sequelize.literal("CURRENT_TIMESTAMP"),
         },
         deleted_at: {
           type: Sequelize.DATE(6),
-          allowNull: true,
         },
       },
       {

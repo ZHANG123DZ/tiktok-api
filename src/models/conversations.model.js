@@ -33,7 +33,8 @@ module.exports = (sequelize, DataTypes) => {
     }
   );
   Conversation.associate = (db) => {
-    Conversation.belongsTo(db.User, {
+    Conversation.belongsToMany(db.User, {
+      through: db.UserConversation,
       foreignKey: "user_id",
       as: "creator",
     });

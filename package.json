@@ -19,6 +19,8 @@
     "otp-generator": "^4.0.1",
     "parse-data-uri": "^0.2.0",
     "process": "^0.11.10",
+    "pusher": "^5.2.0",
+    "pusher-js": "^8.4.0",
     "sequelize": "^6.37.7",
     "slugify": "^1.6.6",
     "speakingurl": "^14.0.1",

@@ -12,13 +12,12 @@ module.exports = {
     await queryInterface.createTable("messages", {
       id: {
         type: Sequelize.BIGINT.UNSIGNED,
-        allowNull: false,
         autoIncrement: true,
         primaryKey: true,
+        allowNull: false,
       },
       user_id: {
         type: Sequelize.BIGINT.UNSIGNED,
-        allowNull: false,
         references: {
           model: "users",
           key: "id",
@@ -28,7 +27,6 @@ module.exports = {
       },
       conversation_id: {
         type: Sequelize.BIGINT.UNSIGNED,
-        allowNull: false,
         references: {
           model: "conversations",
           key: "id",
@@ -38,26 +36,21 @@ module.exports = {
       },
       content: {
         type: Sequelize.TEXT,
-        allowNull: false,
       },
       avatar_url: {
         type: Sequelize.STRING(255),
-        allowNull: true,
       },
       created_at: {
         type: Sequelize.DATE(6),
-        allowNull: false,
         defaultValue: Sequelize.literal("CURRENT_TIMESTAMP(6)"),
       },
       updated_at: {
         type: Sequelize.DATE(6),
-        allowNull: false,
         defaultValue: Sequelize.literal("CURRENT_TIMESTAMP(6)"),
         onUpdate: Sequelize.literal("CURRENT_TIMESTAMP(6)"),
       },
       deleted_at: {
         type: Sequelize.DATE(6),
-        allowNull: true,
       },
     });
   },

@@ -14,7 +14,7 @@ module.exports = {
         name,
         slug: slugify(name),
         description: faker.lorem.sentence(),
-        post_count: faker.number.int({ min: 0, max: 1000 }),
+        post_count: 0,
         created_at: new Date(),
         updated_at: new Date(),
       });

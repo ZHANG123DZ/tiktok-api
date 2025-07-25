@@ -16,7 +16,6 @@ module.exports = {
 
         post_id: {
           type: Sequelize.BIGINT.UNSIGNED,
-          allowNull: false,
           references: {
             model: "posts",
             key: "id",
@@ -27,7 +26,6 @@ module.exports = {
 
         user_id: {
           type: Sequelize.BIGINT.UNSIGNED,
-          allowNull: false,
           references: {
             model: "users",
             key: "id",
@@ -38,12 +36,10 @@ module.exports = {
 
         content: {
           type: Sequelize.TEXT,
-          allowNull: false,
         },
 
         parent_id: {
           type: Sequelize.BIGINT.UNSIGNED,
-          allowNull: true,
           references: {
             model: "comments",
             key: "id",
@@ -53,25 +49,21 @@ module.exports = {
         },
         like_count: {
           type: Sequelize.BIGINT,
-          allowNull: true,
           defaultValue: 0,
         },
         created_at: {
           type: Sequelize.DATE(6),
-          allowNull: false,
           defaultValue: Sequelize.literal("CURRENT_TIMESTAMP(6)"),
         },
 
         updated_at: {
           type: Sequelize.DATE(6),
-          allowNull: false,
           defaultValue: Sequelize.literal("CURRENT_TIMESTAMP(6)"),
           onUpdate: Sequelize.literal("CURRENT_TIMESTAMP(6)"),
         },
 
         deleted_at: {
           type: Sequelize.DATE(6),
-          allowNull: true,
         },
       },
       {

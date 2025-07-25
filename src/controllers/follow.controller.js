@@ -19,7 +19,7 @@ const getFollowers = async (req, res) => {
 
 const getFollowing = async (req, res) => {
   const { type, id } = req.params;
-
+  console.log(id);
   try {
     const results = await followsService.getFollowing(id, type);
     return response.success(res, 200, results);

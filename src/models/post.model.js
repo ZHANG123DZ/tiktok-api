@@ -131,7 +131,7 @@ module.exports = (sequelize, DataTypes) => {
       },
       published_at: {
         type: DataTypes.DATE(6),
-        allowNull: false,
+        allowNull: true,
       },
       deleted_at: {
         type: DataTypes.DATE(6),

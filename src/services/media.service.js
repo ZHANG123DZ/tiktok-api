@@ -48,11 +48,11 @@ class MediaService {
     return publicId;
   }
 
-  async uploadSingleFile(file, folder = "uploads", userId) {
+  async uploadSingleFile(file, folder = "uploads", user) {
     if (!file) {
       throw new Error("No file provided for upload.");
     }
-    folder = `${folder}/${userId}`;
+    folder = `user/${user.id}/${folder}`;
 
     try {
       const fileDataUriContent = this.#formatBufferToDataUriContent(file);
@@ -76,11 +76,11 @@ class MediaService {
     }
   }
 
-  async uploadMulti(files, folder = "uploads", userId) {
+  async uploadMulti(files, folder = "uploads", user) {
     if (!files || files.length === 0) {
       return [];
     }
-    folder = `${folder}/${userId}`;
+    folder = `user/${user.id}/${folder}`;
 
     const uploadPromises = files.map(async (file) => {
       try {
@@ -117,7 +117,7 @@ class MediaService {
     return Promise.all(uploadPromises);
   }
 
-  async replace(file, oldUrl, folder = "uploads", userId) {
+  async replace(file, oldUrl, folder = "uploads", user) {
     if (!file) {
       throw new Error("No new file provided for replacement.");
     }
@@ -125,7 +125,8 @@ class MediaService {
       throw new Error("Old URL is required to replace media.");
     }
     let oldPublicId = null;
-    folder = `${folder}/${userId}`;
+    folder = `user/${user.id}/${folder}`;
+
     if (this.#isCloudinaryUrl(oldUrl)) {
       try {
         oldPublicId = await getPublicIdFromCloudinaryUrl(oldUrl);
@@ -159,7 +160,7 @@ class MediaService {
     }
   }
 
-  async del(url, resourceType, userId) {
+  async del(url, resourceType, user) {
     //Sẽ check trong bảng media_files
     if (!url) {
       throw new Error("URL is required to delete media.");
@@ -178,6 +179,15 @@ class MediaService {
 
     if (!publicId) {
       throw new Error("Public ID is required to delete media.");
+    }
+
+    const expectedFolderPrefix = `user/${user.id}/`;
+
+    // Kiểm tra xem publicId có bắt đầu bằng tiền tố thư mục của người dùng hay không
+    if (!publicId.startsWith(expectedFolderPrefix)) {
+      throw new Error(
+        "Attempt to delete a file outside of the user's designated folder."
+      );
     }
 
     try {

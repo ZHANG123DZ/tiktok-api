@@ -170,7 +170,8 @@ module.exports = (sequelize, DataTypes) => {
       foreignKey: "user_id",
       as: "messages",
     });
-    User.hasMany(db.Conversation, {
+    User.belongsToMany(db.Conversation, {
+      through: db.UserConversation,
       foreignKey: "user_id",
       as: "conversations",
     });

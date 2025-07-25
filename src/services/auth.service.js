@@ -81,6 +81,7 @@ class authService {
     }
     const auth = await User.create(data);
     await UserSetting.create({ user_id: auth.dataValues.id });
+
     return auth.dataValues;
   }
 

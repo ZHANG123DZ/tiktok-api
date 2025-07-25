@@ -111,5 +111,4 @@ class FollowsService {
     return !!exits;
   }
 }
-
 module.exports = new FollowsService();

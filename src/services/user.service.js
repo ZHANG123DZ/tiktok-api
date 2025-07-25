@@ -79,6 +79,8 @@ class UsersService {
         "excerpt",
         "slug",
         "cover_url",
+        "thumbnail_url",
+        "status",
         "author_id",
         "author_name",
         "author_avatar",
