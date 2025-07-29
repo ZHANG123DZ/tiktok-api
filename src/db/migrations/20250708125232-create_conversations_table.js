@@ -19,7 +19,7 @@ module.exports = {
       avatar_url: {
         type: Sequelize.STRING(255),
       },
-      avatar_url: {
+      name: {
         type: Sequelize.STRING(255),
       },
       created_at: {

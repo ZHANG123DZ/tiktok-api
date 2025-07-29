@@ -51,3 +51,16 @@ exports.getOrCreate = async (req, res) => {
   );
   response.success(res, 200, conversation);
 };
+
+exports.markedRead = async (req, res) => {
+  const { messageId, readAt } = req.body;
+  const userId = req.user.id;
+  const conversationId = req.params.id;
+  const conversation = await ConversationService.markedRead(
+    userId,
+    conversationId,
+    messageId,
+    readAt
+  );
+  response.success(res, 200, conversation);
+};

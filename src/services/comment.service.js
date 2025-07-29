@@ -1,3 +1,5 @@
+const pusher = require("@/configs/pusher");
+const incrementField = require("@/helper/incrementField");
 const { Comment, Post, User, Like, Sequelize } = require("@/models/index");
 const { where, Op } = require("sequelize");
 
@@ -44,7 +46,6 @@ class CommentsService {
 
     const allComments = [...parentComments, ...replies];
 
-    // Lấy danh sách comment mà user đã like
     const commentIds = allComments.map((c) => c.id);
     let likedSet = new Set();
     if (currentUserId && commentIds.length > 0) {
@@ -58,7 +59,6 @@ class CommentsService {
       likedSet = new Set(liked.map((l) => l.like_able_id));
     }
 
-    // Xây cây comment
     function buildCommentTree(comments, parentId = null) {
       return comments
         .filter((c) => c.parent_id === parentId)
@@ -78,7 +78,6 @@ class CommentsService {
 
     const tree = buildCommentTree(allComments);
 
-    // Tổng toàn bộ comment cha + replies của post
     const total = await Comment.count({
       where: {
         post_id: post.id,
@@ -123,10 +122,16 @@ class CommentsService {
       ],
     });
     comment.dataValues.isLiked = false;
-    await Post.update(
-      { comment_count: Sequelize.literal("comment_count + 1") },
-      { where: { id: data.post_id } }
-    );
+    await incrementField(Post, "comment_count", +1, {
+      id: comment.post_id,
+    });
+    comment.dataValues.author = {
+      avatar: comment.author.avatar_url,
+      name: comment.author.full_name,
+    };
+    comment.dataValues.createdAt = comment.created_at;
+    comment.dataValues.likes = Number(comment.like_count);
+    pusher.trigger(`post-${data.post_id}-comments`, "new-comment", comment);
     return comment;
   }
 
@@ -136,14 +141,47 @@ class CommentsService {
         id,
       },
     });
+    const updatedComment = await Comment.findByPk(id, {
+      include: [
+        {
+          model: User,
+          as: "author",
+          attributes: ["id", "full_name", "avatar_url"],
+        },
+        {
+          model: Comment,
+          as: "replies",
+          attributes: ["id", "content", "user_id", "post_id"],
+        },
+      ],
+    });
+
+    // Format thêm field nếu cần
+    updatedComment.dataValues.isLiked = false;
+    updatedComment.dataValues.author = {
+      name: updatedComment.author.full_name,
+      avatar: updatedComment.author.avatar_url,
+    };
+    updatedComment.dataValues.createdAt = updatedComment.created_at;
+    updatedComment.dataValues.likes = Number(updatedComment.like_count);
+
+    // Trigger sự kiện realtime
+    pusher.trigger(
+      `post-${updatedComment.post_id}-comments`,
+      "updated-comment",
+      updatedComment
+    );
     return comment;
   }
 
   async remove(id) {
-    const comment = await Comment.destroy({ where: { id } });
-    await Post.update(
-      { comment_count: Sequelize.literal("comment_count - 1") },
-      { where: { id: data.post_id } }
+    const comment = await Comment.findByPk(id);
+    await Comment.destroy({ where: { id } });
+    await incrementField(Post, "comment_count", -1, { id: comment.post_id });
+    pusher.trigger(
+      `post-${comment.post_id}-comments`,
+      "delete-comment",
+      Number(id)
     );
     return comment;
   }

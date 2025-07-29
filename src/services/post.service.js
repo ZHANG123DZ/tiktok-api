@@ -1,3 +1,4 @@
+const incrementField = require("@/helper/incrementField");
 const {
   Post,
   Topic,
@@ -160,14 +161,10 @@ class PostsService {
         PostTopic.create({ post_id: post.id, topic_id: id })
       )
     );
-    await User.update(
-      { post_count: Sequelize.literal("post_count + 1") },
-      { where: { id: user.id } }
-    );
-    await Topic.update(
-      { post_count: Sequelize.literal("post_count + 1") },
-      { where: { id: { [Op.in]: data.topics } } }
-    );
+    await incrementField(User, "post_count", +1, { id: user.id });
+    await incrementField(Topic, "post_count", +1, {
+      id: { [Op.in]: data.topics },
+    });
     return post;
   }
 
@@ -207,16 +204,11 @@ class PostsService {
 
     await Post.destroy({ where: { id: post.id } });
 
-    await User.update(
-      { post_count: Sequelize.literal("post_count - 1") },
-      { where: { id: user.id } }
-    );
-
+    await incrementField(User, "post_count", -1, { id: user.id });
     if (topicIds.length > 0) {
-      await Topic.update(
-        { post_count: Sequelize.literal("post_count - 1") },
-        { where: { id: { [Op.in]: topicIds } } }
-      );
+      await incrementField(Topic, "post_count", -1, {
+        id: { [Op.in]: topicIds },
+      });
     }
 
     return { message: "Post deleted successfully" };

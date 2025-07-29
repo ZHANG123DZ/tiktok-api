@@ -27,6 +27,10 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.TEXT,
         allowNull: false,
       },
+      read_at: {
+        type: DataTypes.DATE(6),
+        allowNull: true,
+      },
     },
     {
       tableName: "notifications",
@@ -43,6 +47,21 @@ module.exports = (sequelize, DataTypes) => {
     Notification.belongsTo(db.User, {
       foreignKey: "user_id",
       as: "user",
+    });
+    Notification.belongsTo(db.User, {
+      foreignKey: "notifiable_id",
+      as: "follower",
+      constraints: false,
+    });
+    Notification.belongsTo(db.Post, {
+      foreignKey: "notifiable_id",
+      as: "post",
+      constraints: false,
+    });
+    Notification.belongsTo(db.Comment, {
+      foreignKey: "notifiable_id",
+      as: "comment",
+      constraints: false,
     });
   };
   return Notification;

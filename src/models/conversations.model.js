@@ -40,6 +40,10 @@ module.exports = (sequelize, DataTypes) => {
       foreignKey: "conversation_id",
       as: "messages",
     });
+    Conversation.hasMany(db.MessageRead, {
+      foreignKey: "conversation_id",
+      as: "list_readers",
+    });
   };
   return Conversation;
 };

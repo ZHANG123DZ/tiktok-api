@@ -1,4 +1,6 @@
-const { Follow, User, Post, Sequelize } = require("@/models/index");
+const pusher = require("@/configs/pusher");
+const incrementField = require("@/helper/incrementField");
+const { Follow, User, Post, Notification } = require("@/models/index");
 const { getFollowTargetByType } = require("@/utils/followTarget");
 
 class FollowsService {
@@ -50,9 +52,8 @@ class FollowsService {
 
   async follow(userId, type, followAbleId) {
     const { model: Model, attributes } = getFollowTargetByType(type);
-    const user = await User.findOne({ where: { id: userId } });
     const targetFollow = await Model.findOne({ where: { id: followAbleId } });
-    if (!targetFollow || !user) return false;
+    if (!targetFollow || !userId) return false;
 
     const where = {
       user_id: userId,
@@ -69,9 +70,19 @@ class FollowsService {
       return false;
     }
     await Follow.create(where);
-    await Model.update(
-      { follower_count: Sequelize.literal("follower_count + 1") },
-      { where: { id: followAbleId } }
+    await incrementField(Model, "follower_count", +1, { id: followAbleId });
+    const notify = await Notification.create({
+      type: "follow",
+      user_id: followAbleId,
+      notifiable_id: userId,
+      notifiable_type: "User",
+      created_at: new Date(),
+      updated_at: new Date(),
+    });
+    pusher.trigger(
+      `notification-user-${followAbleId}`,
+      "new-notification",
+      notify
     );
     return true;
   }
@@ -91,10 +102,7 @@ class FollowsService {
     await Follow.destroy({
       where: where,
     });
-    await Model.update(
-      { follower_count: Sequelize.literal("follower_count - 1") },
-      { where: { id: followAbleId } }
-    );
+    await incrementField(Model, "follower_count", -1, { id: followAbleId });
     return;
   }
 

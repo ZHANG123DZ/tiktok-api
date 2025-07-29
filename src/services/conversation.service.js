@@ -1,6 +1,12 @@
 const faker = require("@faker-js/faker");
 
-const { Conversation, UserConversation, User, Message } = require("@/models");
+const {
+  Conversation,
+  UserConversation,
+  User,
+  Message,
+  MessageRead,
+} = require("@/models");
 const { Sequelize } = require("@/models");
 const { Op } = Sequelize;
 
@@ -61,26 +67,49 @@ class ConversationService {
           limit: 1,
           order: [["created_at", "DESC"]],
         },
+        {
+          model: MessageRead,
+          as: "list_readers",
+        },
       ],
       order: [["updated_at", "DESC"]],
     });
 
-    return conversations.map((conversation) => {
-      const conv = conversation.get({ plain: true });
+    return Promise.all(
+      conversations.map(async (conversation) => {
+        const conv = conversation.get({ plain: true });
 
-      // Gán tên nếu là cuộc hội thoại 2 người
-      if (conv.users.length === 2) {
-        const speaker = conv.users.find((u) => u.id !== userId);
-        conv.name = speaker.full_name;
-        conv.avatar_url = speaker.avatar_url;
-      }
+        if (conv.users.length === 2) {
+          const speaker = conv.users.find((u) => u.id !== userId);
+          conv.name = speaker.full_name;
+          conv.avatar_url = speaker.avatar_url;
+        }
 
-      // Lấy tin nhắn cuối cùng
-      conv.lastMessage = conv.messages?.[0] ?? null;
-      delete conv.messages;
+        conv.lastMessage = conv.messages?.[0] ?? null;
+        delete conv.messages;
 
-      return conv;
-    });
+        const myRead = conv.list_readers?.[0] ?? null;
+        let unreadCount = 0;
+
+        if (!myRead || myRead.message_id === null) {
+          unreadCount = await Message.count({
+            where: { conversation_id: conversation.id },
+          });
+        } else {
+          unreadCount = await Message.count({
+            where: {
+              conversation_id: conversation.id,
+              id: { [Op.gt]: myRead.message_id },
+            },
+          });
+        }
+
+        conv.unreadCount = unreadCount;
+        delete conv.list_readers;
+
+        return conv;
+      })
+    );
   }
 
   async getById(id, userId) {
@@ -177,6 +206,26 @@ class ConversationService {
     }
 
     return await this.create(userId, [targetUserId]);
+  }
+
+  async markedRead(userId, conversationId, messageId = null, readAt = null) {
+    const [record, created] = await MessageRead.findOrCreate({
+      where: { user_id: userId, conversation_id: conversationId },
+      defaults: {
+        message_id: messageId,
+        read_at: readAt,
+      },
+    });
+
+    if (!created) {
+      if (record.message_id === null || record.message_id < messageId) {
+        await record.update({
+          message_id: messageId,
+          read_at: readAt,
+        });
+      }
+    }
+    return;
   }
 }
 

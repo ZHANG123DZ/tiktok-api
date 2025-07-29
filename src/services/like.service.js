@@ -1,4 +1,5 @@
-const { Like, User, Post, Sequelize } = require("@/models/index");
+const incrementField = require("@/helper/incrementField");
+const { Like, User, Post, Sequelize, sequelize } = require("@/models/index");
 const { getLikeTargetByType } = require("@/utils/likeTarget");
 
 class LikesService {
@@ -70,18 +71,12 @@ class LikesService {
 
     await Like.create(where);
 
-    await Model.update(
-      { like_count: Sequelize.literal("like_count + 1") },
-      { where: { id: likeAbleId } }
-    );
+    await incrementField(Model, "like_count", +1, { id: likeAbleId });
 
     if (Model === Post) {
       const post = await Post.findByPk(likeAbleId);
       if (post) {
-        await User.update(
-          { like_count: Sequelize.literal("like_count + 1") },
-          { where: { id: post.author_id } }
-        );
+        await incrementField(User, "like_count", +1, { id: post.author_id });
       }
     }
     return true;
@@ -102,17 +97,11 @@ class LikesService {
     await Like.destroy({
       where: where,
     });
-    await Model.update(
-      { like_count: Sequelize.literal("like_count - 1") },
-      { where: { id: likeAbleId } }
-    );
+    await incrementField(Model, "like_count", -1, { id: likeAbleId });
     if (Model === Post) {
       const post = await Post.findByPk(likeAbleId);
       if (post) {
-        await User.update(
-          { like_count: Sequelize.literal("like_count - 1") },
-          { where: { id: post.author_id } }
-        );
+        await incrementField(User, "like_count", -1, { id: post.author_id });
       }
     }
     return;

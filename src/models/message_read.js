@@ -1,6 +1,6 @@
 module.exports = (sequelize, DataTypes) => {
-  const Message = sequelize.define(
-    "Message",
+  const MessageRead = sequelize.define(
+    "MessageRead",
     {
       user_id: {
         type: DataTypes.BIGINT.UNSIGNED,
@@ -22,17 +22,23 @@ module.exports = (sequelize, DataTypes) => {
         onDelete: "CASCADE",
         onUpdate: "CASCADE",
       },
-      content: {
-        type: DataTypes.TEXT,
+      message_id: {
+        type: DataTypes.BIGINT.UNSIGNED,
         allowNull: false,
+        references: {
+          model: "messages",
+          key: "id",
+        },
+        onDelete: "CASCADE",
+        onUpdate: "CASCADE",
       },
-      deleted_at: {
-        type: DataTypes.DATE(6),
-        allowNull: true,
+      read_at: {
+        type: DataTypes.DATE,
+        allowNull: false,
       },
     },
     {
-      tableName: "messages",
+      tableName: "message_reads",
       timestamps: true,
       underscored: true,
       charset: "utf8",
@@ -42,19 +48,23 @@ module.exports = (sequelize, DataTypes) => {
       updatedAt: "updated_at",
     }
   );
-  Message.associate = (db) => {
-    Message.belongsTo(db.User, {
+
+  MessageRead.associate = (db) => {
+    MessageRead.belongsTo(db.User, {
       foreignKey: "user_id",
-      as: "sender",
+      as: "user",
     });
-    Message.belongsTo(db.Conversation, {
+
+    MessageRead.belongsTo(db.Conversation, {
       foreignKey: "conversation_id",
       as: "conversation",
     });
-    Message.hasMany(db.MessageRead, {
+
+    MessageRead.belongsTo(db.Message, {
       foreignKey: "message_id",
-      as: "reads",
+      as: "message",
     });
   };
-  return Message;
+
+  return MessageRead;
 };
