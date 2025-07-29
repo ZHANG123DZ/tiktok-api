@@ -1,3 +1,4 @@
+const checkPostInteractions = require("@/helper/checkPostInteractions");
 const incrementField = require("@/helper/incrementField");
 const {
   Post,
@@ -16,30 +17,30 @@ class PostsService {
   async getAll(page, limit, userId) {
     const offset = (page - 1) * limit;
 
-    const { rows: items, count: total } = await Post.findAndCountAll({
+    const { rows: posts, count: total } = await Post.findAndCountAll({
       include: [Topic, Comment],
       limit,
       offset,
       order: [["created_at", "DESC"]],
     });
-    // let likedSet = new Set();
-    // if (userId && commentIds.length > 0) {
-    //   const liked = await Like.findAll({
-    //     where: {
-    //       user_id: userId,
-    //       like_able_id: commentIds,
-    //       like_able_type: "comment",
-    //     },
-    //   });
-    //   likedSet = new Set(liked.map((l) => l.like_able_id));
-    // }
+    const postIds = posts.map((p) => p.id);
+
+    const interactions = await checkPostInteractions(postIds, userId);
+
+    const items = posts.map((post) => {
+      const plain = post.get({ plain: true });
+      const { isLiked, isBookMarked } = interactions.get(post.id) || {};
+      plain.isLiked = isLiked || false;
+      plain.isBookMarked = isBookMarked || false;
+      return plain;
+    });
     return { items, total };
   }
 
   async featured(page, limit, userId) {
     const offset = (page - 1) * limit;
 
-    const { rows: items, count: total } = await Post.findAndCountAll({
+    const { rows: posts, count: total } = await Post.findAndCountAll({
       include: [
         {
           model: Topic,
@@ -50,13 +51,24 @@ class PostsService {
       offset,
       order: [["like_count", "DESC"]],
     });
+    const postIds = posts.map((p) => p.id);
+
+    const interactions = await checkPostInteractions(postIds, userId);
+
+    const items = posts.map((post) => {
+      const plain = post.get({ plain: true });
+      const { isLiked, isBookMarked } = interactions.get(post.id) || {};
+      plain.isLiked = isLiked || false;
+      plain.isBookMarked = isBookMarked || false;
+      return plain;
+    });
     return { items, total };
   }
 
   async related(page, limit, prevTopics, userId) {
     const offset = (page - 1) * limit;
 
-    const { rows: items, count: total } = await Post.findAndCountAll({
+    const { rows: posts, count: total } = await Post.findAndCountAll({
       include: [
         {
           model: Topic,
@@ -74,6 +86,17 @@ class PostsService {
       order: [["created_at", "DESC"]],
       distinct: true,
     });
+    const postIds = posts.map((p) => p.id);
+
+    const interactions = await checkPostInteractions(postIds, userId);
+
+    const items = posts.map((post) => {
+      const plain = post.get({ plain: true });
+      const { isLiked, isBookMarked } = interactions.get(post.id) || {};
+      plain.isLiked = isLiked || false;
+      plain.isBookMarked = isBookMarked || false;
+      return plain;
+    });
 
     return { items, total };
   }
@@ -81,7 +104,7 @@ class PostsService {
   async latest(page, limit, userId) {
     const offset = (page - 1) * limit;
 
-    const { rows: items, count: total } = await Post.findAndCountAll({
+    const { rows: posts, count: total } = await Post.findAndCountAll({
       include: [
         {
           model: Topic,
@@ -92,7 +115,17 @@ class PostsService {
       offset,
       order: [["created_at", "DESC"]],
     });
+    const postIds = posts.map((p) => p.id);
 
+    const interactions = await checkPostInteractions(postIds, userId);
+
+    const items = posts.map((post) => {
+      const plain = post.get({ plain: true });
+      const { isLiked, isBookMarked } = interactions.get(post.id) || {};
+      plain.isLiked = isLiked || false;
+      plain.isBookMarked = isBookMarked || false;
+      return plain;
+    });
     return { items, total };
   }
 

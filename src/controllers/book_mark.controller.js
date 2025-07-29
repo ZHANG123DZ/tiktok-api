@@ -19,6 +19,7 @@ const getBookMarks = async (req, res) => {
 
 const getBookMarkedUserId = async (req, res) => {
   const { type, id } = req.params;
+  const userId = req.user.id;
 
   try {
     const results = await bookmarksService.getBookMarkedUserId(id, type);

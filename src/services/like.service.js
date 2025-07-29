@@ -79,6 +79,7 @@ class LikesService {
         await incrementField(User, "like_count", +1, { id: post.author_id });
       }
     }
+
     return true;
   }
 

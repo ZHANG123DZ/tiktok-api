@@ -1,3 +1,4 @@
+const checkPostInteractions = require("@/helper/checkPostInteractions");
 const {
   User,
   Post,
@@ -60,7 +61,7 @@ class UsersService {
     return user;
   }
 
-  async getUserPosts(key, page, limit) {
+  async getUserPosts(key, page, limit, userId) {
     const isId = /^\d+$/.test(key);
     const user = await User.findOne({
       where: isId ? { id: key } : { username: key },
@@ -68,7 +69,7 @@ class UsersService {
     });
     if (!user) throw new Error("User not found");
     const offset = (page - 1) * limit;
-    const { rows: items, count: total } = await Post.findAndCountAll({
+    const { rows: posts, count: total } = await Post.findAndCountAll({
       where: { author_id: user.id },
       order: [["created_at", "DESC"]],
       limit,
@@ -100,6 +101,18 @@ class UsersService {
         },
       ],
     });
+    const postIds = posts.map((p) => p.id);
+
+    const interactions = await checkPostInteractions(postIds, userId);
+
+    const items = posts.map((post) => {
+      const plain = post.get({ plain: true });
+      const { isLiked, isBookMarked } = interactions.get(post.id) || {};
+      plain.isLiked = isLiked || false;
+      plain.isBookMarked = isBookMarked || false;
+      return plain;
+    });
+
     return { items, limit, total };
   }
 

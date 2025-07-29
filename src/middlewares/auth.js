@@ -21,7 +21,6 @@ module.exports = async (req, res, next) => {
     ) {
       return response.error(res, 403, "Tài khoản không hợp lệ hoặc đã bị khóa");
     }
-
     req.user = userData;
     next();
   } catch (error) {

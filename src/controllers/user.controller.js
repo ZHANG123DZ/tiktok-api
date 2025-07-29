@@ -23,10 +23,13 @@ const show = async (req, res) => {
 const getUserPosts = async (req, res) => {
   const username = req.params.key;
   const { page, limit } = req;
+  const userId = req.user?.id;
+
   const { items, total } = await usersService.getUserPosts(
     username,
     page,
-    limit
+    limit,
+    userId
   );
   res.paginate({ items, total });
 };
