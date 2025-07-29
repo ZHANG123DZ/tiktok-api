@@ -16,14 +16,8 @@ module.exports = {
         primaryKey: true,
         allowNull: false,
       },
-      user_id: {
-        type: Sequelize.BIGINT.UNSIGNED,
-        references: {
-          model: "users",
-          key: "id",
-        },
-        onDelete: "CASCADE",
-        onUpdate: "CASCADE",
+      avatar_url: {
+        type: Sequelize.STRING(255),
       },
       avatar_url: {
         type: Sequelize.STRING(255),

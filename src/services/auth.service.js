@@ -11,10 +11,51 @@ const {
 const accessToken = require("@/utils/accessToken");
 const { Op } = require("sequelize");
 const generateUsernameFromEmail = require("@/utils/generateUsernameFromEmail");
+const refreshToken = require("@/utils/refreshToken");
 
 class authService {
   async auth(token) {
     const auth = accessToken.verify(token);
+    if (!auth) return null;
+    const user = await User.findOne({
+      where: { id: auth.sub },
+      include: [
+        {
+          model: Skill,
+          as: "skillList",
+        },
+        {
+          model: Badge,
+          as: "badgeList",
+        },
+      ],
+      attributes: [
+        "id",
+        "email",
+        "username",
+        "full_name",
+        "first_name",
+        "last_name",
+        "avatar_url",
+        "cover_url",
+        "title",
+        "bio",
+        "post_count",
+        "follower_count",
+        "following_count",
+        "like_count",
+        "location",
+        "website",
+        "created_at",
+        "social",
+        "two_factor_enabled",
+        "verified_at",
+      ],
+    });
+    return user;
+  }
+  async refreshTok(token) {
+    const auth = refreshToken.verify(token);
     if (!auth) return null;
     const user = await User.findOne({
       where: { id: auth.sub },

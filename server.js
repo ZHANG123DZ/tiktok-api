@@ -10,6 +10,7 @@ const errorsHandler = require("@/middlewares/errorHandler");
 const handlePagination = require("@/middlewares/handlePagination");
 const allowedOrigins = process.env.CLIENT_URL.split(",");
 const cookieParser = require("cookie-parser");
+const pusher = require("@/configs/pusher");
 const app = express();
 
 //Middleware
@@ -26,11 +27,17 @@ app.use(
     credentials: true,
   })
 );
+
 app.use(express.static("public"));
 app.use(express.json());
 app.use(express.urlencoded());
 app.use(handlePagination);
-
+app.post("/send-message", (req, res) => {
+  pusher.trigger("k12", "created", {
+    message: req.body.message,
+  });
+  res.send("Sent!");
+});
 app.use("/api/v1", router);
 
 //Error Handler

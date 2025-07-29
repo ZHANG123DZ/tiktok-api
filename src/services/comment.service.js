@@ -1,13 +1,18 @@
-const { Comment, Post, User, Like } = require("@/models/index");
+const { Comment, Post, User, Like, Sequelize } = require("@/models/index");
 const { where, Op } = require("sequelize");
 
 class CommentsService {
-  async getPostComment(slug, currentUserId) {
+  async getPostComment(slug, page, limit, currentUserId) {
     const post = await Post.findOne({ where: { slug } });
     if (!post) throw new Error("Post not found");
 
-    const rawComments = await Comment.findAll({
-      where: { post_id: post.id },
+    const offset = (page - 1) * limit;
+
+    const parentComments = await Comment.findAll({
+      where: {
+        post_id: post.id,
+        parent_id: null,
+      },
       include: [
         {
           model: User,
@@ -15,33 +20,45 @@ class CommentsService {
           attributes: ["id", "full_name", "avatar_url", "username"],
         },
       ],
-      attributes: [
-        "id",
-        "content",
-        "created_at",
-        "like_count",
-        "parent_id",
-        "user_id",
-        "post_id",
-      ],
-      order: [["created_at", "ASC"]],
+      order: [["like_count", "ASC"]],
+      limit,
+      offset,
     });
 
-    const commentIds = rawComments.map((c) => c.id);
+    const parentIds = parentComments.map((c) => c.id);
+
+    const replies = await Comment.findAll({
+      where: {
+        post_id: post.id,
+        parent_id: parentIds.length > 0 ? parentIds : null,
+      },
+      include: [
+        {
+          model: User,
+          as: "author",
+          attributes: ["id", "full_name", "avatar_url", "username"],
+        },
+      ],
+      order: [["like_count", "ASC"]],
+    });
+
+    const allComments = [...parentComments, ...replies];
+
+    // Lấy danh sách comment mà user đã like
+    const commentIds = allComments.map((c) => c.id);
     let likedSet = new Set();
-    if (commentIds.length > 0) {
-      if (currentUserId) {
-        const liked = await Like.findAll({
-          where: {
-            user_id: currentUserId,
-            like_able_id: commentIds,
-            like_able_type: "comment",
-          },
-        });
-        likedSet = new Set(liked.map((l) => l.like_able_id));
-      }
+    if (currentUserId && commentIds.length > 0) {
+      const liked = await Like.findAll({
+        where: {
+          user_id: currentUserId,
+          like_able_id: commentIds,
+          like_able_type: "comment",
+        },
+      });
+      likedSet = new Set(liked.map((l) => l.like_able_id));
     }
 
+    // Xây cây comment
     function buildCommentTree(comments, parentId = null) {
       return comments
         .filter((c) => c.parent_id === parentId)
@@ -50,12 +67,30 @@ class CommentsService {
           return {
             ...c.toJSON(),
             isLiked: likedSet.has(c.id),
+            isEdited:
+              new Date(c.updated_at).getTime() -
+                new Date(c.created_at).getTime() >
+              1000,
             replies: children,
           };
         });
     }
 
-    return buildCommentTree(rawComments);
+    const tree = buildCommentTree(allComments);
+
+    // Tổng toàn bộ comment cha + replies của post
+    const total = await Comment.count({
+      where: {
+        post_id: post.id,
+      },
+    });
+
+    return {
+      comments: tree,
+      total,
+      page,
+      limit,
+    };
   }
 
   async getById(id) {
@@ -88,6 +123,10 @@ class CommentsService {
       ],
     });
     comment.dataValues.isLiked = false;
+    await Post.update(
+      { comment_count: Sequelize.literal("comment_count + 1") },
+      { where: { id: data.post_id } }
+    );
     return comment;
   }
 
@@ -102,6 +141,10 @@ class CommentsService {
 
   async remove(id) {
     const comment = await Comment.destroy({ where: { id } });
+    await Post.update(
+      { comment_count: Sequelize.literal("comment_count - 1") },
+      { where: { id: data.post_id } }
+    );
     return comment;
   }
 }

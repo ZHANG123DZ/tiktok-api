@@ -1,6 +1,6 @@
 const express = require("express");
 const uploadController = require("@/controllers/upload.controller");
-const authJWT = require("@/middlewares/authJWT");
+const auth = require("@/middlewares/auth");
 
 const upload = require("@/middlewares/multer");
 
@@ -8,20 +8,20 @@ const router = express.Router();
 
 router.post(
   "/upload-file",
-  authJWT,
+  auth,
   upload.any(),
   uploadController.uploadSingleFile
 );
 
 router.post(
   "/upload-multi-file",
-  authJWT,
+  auth,
   upload.any(),
   uploadController.uploadMultipleFiles
 );
 
-router.patch("/replace", authJWT, upload.any(), uploadController.replace);
+router.patch("/replace", auth, upload.any(), uploadController.replace);
 
-router.delete("/delete/:url", authJWT, uploadController.deleteFile);
+router.delete("/delete/:url", auth, uploadController.deleteFile);
 
 module.exports = router;

@@ -37,9 +37,6 @@ module.exports = {
       content: {
         type: Sequelize.TEXT,
       },
-      avatar_url: {
-        type: Sequelize.STRING(255),
-      },
       created_at: {
         type: Sequelize.DATE(6),
         defaultValue: Sequelize.literal("CURRENT_TIMESTAMP(6)"),

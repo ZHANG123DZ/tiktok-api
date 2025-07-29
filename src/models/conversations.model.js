@@ -2,17 +2,11 @@ module.exports = (sequelize, DataTypes) => {
   const Conversation = sequelize.define(
     "Conversation",
     {
-      user_id: {
-        type: DataTypes.BIGINT.UNSIGNED,
-        allowNull: false,
-        references: {
-          model: "users",
-          key: "id",
-        },
-        onDelete: "CASCADE",
-        onUpdate: "CASCADE",
-      },
       avatar_url: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
+      },
+      name: {
         type: DataTypes.STRING(255),
         allowNull: true,
       },
@@ -35,8 +29,8 @@ module.exports = (sequelize, DataTypes) => {
   Conversation.associate = (db) => {
     Conversation.belongsToMany(db.User, {
       through: db.UserConversation,
-      foreignKey: "user_id",
-      as: "creator",
+      foreignKey: "conversation_id",
+      as: "users",
     });
     Conversation.hasMany(db.UserConversation, {
       foreignKey: "conversation_id",

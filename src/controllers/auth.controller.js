@@ -3,6 +3,7 @@ const response = require("@/utils/response");
 const authService = require("@/services/auth.service");
 const { createCookie, readCookie } = require("@/utils/cookie");
 const accessToken = require("@/utils/accessToken");
+const refreshToken = require("@/utils/refreshToken");
 
 const queue = require("@/utils/queue");
 const emailToken = require("@/utils/emailToken");
@@ -26,18 +27,19 @@ const auth = async (req, res) => {
   }
 };
 
-const refreshToken = async (req, res) => {
+const refreshTok = async (req, res) => {
   try {
-    const auth = await authService.refreshToken(req.body);
-    const user_agent = req.headers["user_agent"];
-    const { email, password, phone, ...data } = auth;
-    const token = accessToken.create(data.id);
+    const refreshTok = readCookie(req, "refresh-token");
+    const user = await authService.refreshTok(refreshTok);
+    const newAccessToken = accessToken.create({ sub: user.id });
+    const newRefreshToken = refreshToken.create({ sub: user.id });
 
-    if (!token) {
+    if (!newRefreshToken || !newAccessToken) {
       response.error(res, 500, "Không tạo được token vui lòng đăng nhập lại");
     }
-    createCookie(res, "token", token);
-    return response.success(res, 200, auth);
+    createCookie(res, "token", newAccessToken);
+    createCookie(res, "refresh-token", newRefreshToken);
+    return response.success(res, 200, "Refresh Token thành công");
   } catch (error) {
     return response.error(res, 401, "Refresh token that bai");
   }
@@ -45,8 +47,23 @@ const refreshToken = async (req, res) => {
 
 const login = async (req, res) => {
   try {
-    const user = await authService.login(req.body);
+    const data = req.body;
+    const { rememberMe, ...dataLogin } = data;
+    const user = await authService.login(dataLogin);
     const token = accessToken.create({ sub: user.id });
+
+    if (rememberMe) {
+      const refreshTok = refreshToken.create({ sub: user.id });
+      if (!refreshTok) {
+        response.error(
+          res,
+          500,
+          "Không tạo được refresh token vui lòng đăng nhập lại"
+        );
+      }
+      createCookie(res, "refresh-token", refreshTok);
+    }
+
     if (!token) {
       return response.error(
         res,
@@ -243,5 +260,5 @@ module.exports = {
   auth,
   sendCode,
   sendForgotEmail,
-  refreshToken,
+  refreshTok,
 };

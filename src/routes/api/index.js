@@ -11,6 +11,8 @@ const likeRouter = require("./like.route");
 const bookmarkRouter = require("./book_mark.route");
 const mediaRouter = require("./media.route");
 const uploadRouter = require("./upload.route");
+const conversationRouter = require("./conversation.route");
+const messagesRouter = require("./message.route");
 
 router.use("/auth", authRouter);
 router.use("/users", userRouter);
@@ -21,6 +23,9 @@ router.use("/likes", likeRouter);
 router.use("/book-marks", bookmarkRouter);
 router.use("/media", mediaRouter);
 router.use("/upload", uploadRouter);
+router.use("/conversations", conversationRouter);
+router.use("/conversations/:conversation/messages", messagesRouter);
+
 //Route cho posts và các thành phần con
 router.use("/posts", postRouter);
 router.use("/posts/:slug/comments", commentRouter);

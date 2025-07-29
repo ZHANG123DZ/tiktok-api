@@ -92,6 +92,7 @@ class UsersService {
         "published_at",
         "reading_time",
       ],
+      distinct: true,
       include: [
         {
           model: Topic,
@@ -99,7 +100,7 @@ class UsersService {
         },
       ],
     });
-    return { items, limit };
+    return { items, limit, total };
   }
 
   async create(data) {

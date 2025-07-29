@@ -1,4 +1,4 @@
-const { Like, User, Post } = require("@/models/index");
+const { Like, User, Post, Sequelize } = require("@/models/index");
 const { getLikeTargetByType } = require("@/utils/likeTarget");
 
 class LikesService {
@@ -59,7 +59,6 @@ class LikesService {
       like_able_type: type,
       like_able_id: likeAbleId,
     };
-
     const exists = await Like.findOne({
       where,
       attributes: ["id", "user_id", "like_able_id", "like_able_type"],
@@ -70,6 +69,21 @@ class LikesService {
     }
 
     await Like.create(where);
+
+    await Model.update(
+      { like_count: Sequelize.literal("like_count + 1") },
+      { where: { id: likeAbleId } }
+    );
+
+    if (Model === Post) {
+      const post = await Post.findByPk(likeAbleId);
+      if (post) {
+        await User.update(
+          { like_count: Sequelize.literal("like_count + 1") },
+          { where: { id: post.author_id } }
+        );
+      }
+    }
     return true;
   }
 
@@ -85,9 +99,22 @@ class LikesService {
       like_able_type: type,
       like_able_id: likeAbleId,
     };
-    const deleted = await Like.destroy({
+    await Like.destroy({
       where: where,
     });
+    await Model.update(
+      { like_count: Sequelize.literal("like_count - 1") },
+      { where: { id: likeAbleId } }
+    );
+    if (Model === Post) {
+      const post = await Post.findByPk(likeAbleId);
+      if (post) {
+        await User.update(
+          { like_count: Sequelize.literal("like_count - 1") },
+          { where: { id: post.author_id } }
+        );
+      }
+    }
     return;
   }
 

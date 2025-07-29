@@ -1,6 +1,6 @@
 const express = require("express");
 const mediaController = require("@/controllers/media.controller");
-const authJWT = require("@/middlewares/authJWT");
+const auth = require("@/middlewares/auth");
 
 const upload = require("@/middlewares/multer");
 
@@ -8,17 +8,17 @@ const router = express.Router();
 
 router.get("/get:url", mediaController.getPublicIdFromUrl);
 
-router.post("/upload", authJWT, upload.any(), mediaController.uploadSingleFile);
+router.post("/upload", auth, upload.any(), mediaController.uploadSingleFile);
 
 router.post(
   "/upload-multi",
-  authJWT,
+  auth,
   upload.any(),
   mediaController.uploadMultipleFiles
 );
 
-router.patch("/replace", authJWT, upload.any(), mediaController.replace);
+router.patch("/replace", auth, upload.any(), mediaController.replace);
 
-router.delete("/delete:url", authJWT, mediaController.del);
+router.delete("/delete:url", auth, mediaController.del);
 
 module.exports = router;

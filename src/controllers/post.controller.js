@@ -5,26 +5,35 @@ const throwError = require("@/utils/throwError");
 
 const index = async (req, res) => {
   const { page, limit } = req;
-  const { items, total } = await postsService.getAll(page, limit);
+  const userId = req.user?.id;
+  const { items, total } = await postsService.getAll(page, limit, userId);
   res.paginate({ items, total });
 };
 
 const featured = async (req, res) => {
   const { page, limit } = req;
-  const { items, total } = await postsService.featured(page, limit);
+  const userId = req.user?.id;
+  const { items, total } = await postsService.featured(page, limit, userId);
   res.paginate({ items, total });
 };
 
 const related = async (req, res) => {
   const { page, limit } = req;
   const preTopics = req.body.topics;
-  const { items, total } = await postsService.related(page, limit, preTopics);
+  const userId = req.user?.id;
+  const { items, total } = await postsService.related(
+    page,
+    limit,
+    preTopics,
+    userId
+  );
   res.paginate({ items, total });
 };
 
 const latest = async (req, res) => {
   const { page, limit } = req;
-  const { items, total } = await postsService.latest(page, limit);
+  const userId = req.user?.id;
+  const { items, total } = await postsService.latest(page, limit, userId);
   res.paginate({ items, total });
 };
 
@@ -46,14 +55,13 @@ const update = async (req, res) => {
 
   if (!post) throwError(404, "Not Found.");
 
-  response.success(res, 201, post);
+  response.success(res, 200, post);
 };
 
 const destroy = async (req, res) => {
-  const result = await postsService.remove(req.params.key);
-
+  const user = req.user;
+  const result = await postsService.remove(req.params.key, user);
   if (!result) throwError(404, "Not Found.");
-
   response.success(res, 204);
 };
 

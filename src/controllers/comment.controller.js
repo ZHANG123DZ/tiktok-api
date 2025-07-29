@@ -6,8 +6,18 @@ const throwError = require("@/utils/throwError");
 const index = async (req, res) => {
   const slug = req.params.slug;
   const currentUserId = req.user?.id;
-  const comments = await commentsService.getPostComment(slug, currentUserId);
-  response.success(res, 200, comments);
+  const { page, limit } = req;
+  try {
+    const comments = await commentsService.getPostComment(
+      slug,
+      page,
+      limit,
+      currentUserId
+    );
+    return response.success(res, 200, comments);
+  } catch (error) {
+    return response.error(res, 404, error);
+  }
 };
 
 const show = async (req, res) => {

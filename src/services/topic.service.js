@@ -1,7 +1,7 @@
 const { Topic, Post } = require("@/models/index");
 const { where, Op } = require("sequelize");
 
-class TopicsService {
+class TopicService {
   async getAll(page, limit) {
     const offset = (page - 1) * limit;
 
@@ -47,4 +47,4 @@ class TopicsService {
   }
 }
 
-module.exports = new TopicsService();
+module.exports = new TopicService();

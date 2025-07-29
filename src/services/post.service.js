@@ -1,10 +1,18 @@
-const { Post, Topic, Comment, Tag, User } = require("@/models/index");
+const {
+  Post,
+  Topic,
+  Comment,
+  PostTopic,
+  Tag,
+  User,
+  Sequelize,
+} = require("@/models/index");
 const { nanoid } = require("nanoid");
 const { where, Op } = require("sequelize");
 const { default: slugify } = require("slugify");
 
 class PostsService {
-  async getAll(page, limit) {
+  async getAll(page, limit, userId) {
     const offset = (page - 1) * limit;
 
     const { rows: items, count: total } = await Post.findAndCountAll({
@@ -13,11 +21,21 @@ class PostsService {
       offset,
       order: [["created_at", "DESC"]],
     });
-
+    // let likedSet = new Set();
+    // if (userId && commentIds.length > 0) {
+    //   const liked = await Like.findAll({
+    //     where: {
+    //       user_id: userId,
+    //       like_able_id: commentIds,
+    //       like_able_type: "comment",
+    //     },
+    //   });
+    //   likedSet = new Set(liked.map((l) => l.like_able_id));
+    // }
     return { items, total };
   }
 
-  async featured(page, limit) {
+  async featured(page, limit, userId) {
     const offset = (page - 1) * limit;
 
     const { rows: items, count: total } = await Post.findAndCountAll({
@@ -34,7 +52,7 @@ class PostsService {
     return { items, total };
   }
 
-  async related(page, limit, prevTopics) {
+  async related(page, limit, prevTopics, userId) {
     const offset = (page - 1) * limit;
 
     const { rows: items, count: total } = await Post.findAndCountAll({
@@ -59,7 +77,7 @@ class PostsService {
     return { items, total };
   }
 
-  async latest(page, limit) {
+  async latest(page, limit, userId) {
     const offset = (page - 1) * limit;
 
     const { rows: items, count: total } = await Post.findAndCountAll({
@@ -120,6 +138,7 @@ class PostsService {
         },
       ],
     });
+
     return post;
   }
 
@@ -136,6 +155,19 @@ class PostsService {
     data.author_avatar = user.avatar_url;
 
     const post = await Post.create(data);
+    await Promise.all(
+      data.topics.map((id) =>
+        PostTopic.create({ post_id: post.id, topic_id: id })
+      )
+    );
+    await User.update(
+      { post_count: Sequelize.literal("post_count + 1") },
+      { where: { id: user.id } }
+    );
+    await Topic.update(
+      { post_count: Sequelize.literal("post_count + 1") },
+      { where: { id: { [Op.in]: data.topics } } }
+    );
     return post;
   }
 
@@ -143,7 +175,9 @@ class PostsService {
     const toSlug = (title) => {
       return `${slugify(title, { lower: true, strict: true })}-${nanoid(6)}`;
     };
-    data.slug = toSlug(data.title);
+    if (data.title) {
+      data.slug = toSlug(data.title);
+    }
     const isId = /^\d+$/.test(key);
     const post = await Post.update(data, {
       where: isId ? { id: key } : { slug: key },
@@ -151,12 +185,41 @@ class PostsService {
     return post;
   }
 
-  async remove(key) {
+  async remove(key, user) {
     const isId = /^\d+$/.test(key);
-    const post = await Post.destroy({
+
+    const post = await Post.findOne({
       where: isId ? { id: key } : { slug: key },
+      include: [
+        {
+          model: Topic,
+          as: "topics",
+          through: { attributes: [] },
+        },
+      ],
     });
-    return post;
+
+    if (!post) throw new Error("Post not found");
+
+    const topicIds = post.topics?.map((t) => t.id) || [];
+
+    await PostTopic.destroy({ where: { post_id: post.id } });
+
+    await Post.destroy({ where: { id: post.id } });
+
+    await User.update(
+      { post_count: Sequelize.literal("post_count - 1") },
+      { where: { id: user.id } }
+    );
+
+    if (topicIds.length > 0) {
+      await Topic.update(
+        { post_count: Sequelize.literal("post_count - 1") },
+        { where: { id: { [Op.in]: topicIds } } }
+      );
+    }
+
+    return { message: "Post deleted successfully" };
   }
 }
 

@@ -1,4 +1,4 @@
-const { Follow, User, Post } = require("@/models/index");
+const { Follow, User, Post, Sequelize } = require("@/models/index");
 const { getFollowTargetByType } = require("@/utils/followTarget");
 
 class FollowsService {
@@ -68,8 +68,11 @@ class FollowsService {
     if (exists) {
       return false;
     }
-
     await Follow.create(where);
+    await Model.update(
+      { follower_count: Sequelize.literal("follower_count + 1") },
+      { where: { id: followAbleId } }
+    );
     return true;
   }
 
@@ -85,9 +88,13 @@ class FollowsService {
       follow_able_type: type,
       follow_able_id: followAbleId,
     };
-    const deleted = await Follow.destroy({
+    await Follow.destroy({
       where: where,
     });
+    await Model.update(
+      { follower_count: Sequelize.literal("follower_count - 1") },
+      { where: { id: followAbleId } }
+    );
     return;
   }
 
