@@ -1,16 +1,17 @@
 module.exports = (sequelize, DataTypes) => {
   const Email = sequelize.define(
-    "Email",
+    'Email',
     {
-      user_id: {
+      userId: {
         type: DataTypes.BIGINT.UNSIGNED,
         allowNull: false,
         references: {
-          model: "users",
-          key: "id",
+          model: 'users',
+          key: 'id',
         },
-        onDelete: "CASCADE",
-        onUpdate: "CASCADE",
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+        field: 'user_id',
       },
       type: {
         type: DataTypes.STRING,
@@ -26,20 +27,20 @@ module.exports = (sequelize, DataTypes) => {
       },
     },
     {
-      tableName: "emails",
+      tableName: 'emails',
       timestamps: true,
       underscored: true,
-      charset: "utf8",
-      collate: "utf8_general_ci",
-      engine: "InnoDB",
-      createdAt: "created_at",
-      updatedAt: "updated_at",
+      charset: 'utf8',
+      collate: 'utf8_general_ci',
+      engine: 'InnoDB',
+      createdAt: 'createdAt',
+      updatedAt: 'updatedAt',
     }
   );
   Email.associate = (db) => {
     Email.belongsTo(db.User, {
-      foreignKey: "user_id",
-      as: "user",
+      foreignKey: 'user_id',
+      as: 'user',
     });
   };
   return Email;

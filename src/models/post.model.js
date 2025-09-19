@@ -1,180 +1,216 @@
 module.exports = (sequelize, DataTypes) => {
   const Post = sequelize.define(
-    "Post",
+    'Post',
     {
       title: {
         type: DataTypes.STRING(191),
         allowNull: true,
-        defaultValue: "",
+        defaultValue: '',
       },
       slug: {
         type: DataTypes.STRING(191),
         allowNull: true,
         unique: true,
       },
+      thumbnail: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
+      },
       content: {
         type: DataTypes.TEXT,
         allowNull: true,
       },
-      excerpt: {
-        type: DataTypes.TEXT,
+      type: {
+        type: DataTypes.STRING(50),
         allowNull: true,
       },
       description: {
         type: DataTypes.TEXT,
         allowNull: true,
       },
-      author_id: {
+      musicId: {
         type: DataTypes.BIGINT.UNSIGNED,
         allowNull: false,
         references: {
-          model: "users",
-          key: "id",
+          model: 'musics',
+          key: 'id',
         },
-        onDelete: "CASCADE",
-        onUpdate: "CASCADE",
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+        field: 'music_id',
       },
-      author_name: {
+      authorId: {
+        type: DataTypes.BIGINT.UNSIGNED,
+        allowNull: false,
+        references: {
+          model: 'users',
+          key: 'id',
+        },
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+        field: 'author_id',
+      },
+      authorName: {
         type: DataTypes.STRING(191),
         allowNull: true,
+        field: 'author_name',
       },
-      author_username: {
+      authorUserName: {
         type: DataTypes.STRING(191),
         allowNull: true,
+        field: 'author_username',
       },
-      author_avatar: {
+      authorAvatar: {
         type: DataTypes.STRING(191),
         allowNull: true,
+        field: 'author_avatar',
       },
-      meta_title: {
+      metaTitle: {
+        field: 'meta_title',
         type: DataTypes.STRING(191),
         allowNull: true,
-        defaultValue: "",
+        defaultValue: '',
       },
-      meta_description: {
+      metaDescription: {
+        field: 'meta_description',
         type: DataTypes.STRING(191),
         allowNull: false,
-        defaultValue: "",
+        defaultValue: '',
       },
       status: {
         type: DataTypes.STRING(50),
-        defaultValue: "draft",
+        defaultValue: 'draft',
         allowNull: true,
       },
-      view_count: {
+      viewCount: {
         type: DataTypes.BIGINT.UNSIGNED,
         allowNull: true,
         defaultValue: 0,
+        field: 'view_count',
       },
-      like_count: {
+      likeCount: {
         type: DataTypes.BIGINT.UNSIGNED,
         allowNull: true,
         defaultValue: 0,
+        field: 'like_count',
       },
-      comment_count: {
+      commentCount: {
         type: DataTypes.BIGINT.UNSIGNED,
         allowNull: true,
         defaultValue: 0,
+        field: 'comment_count',
       },
-      report_count: {
+      bookMarkCount: {
         type: DataTypes.BIGINT.UNSIGNED,
         allowNull: true,
         defaultValue: 0,
+        field: 'book_mark_count',
       },
-
+      shareCount: {
+        type: DataTypes.BIGINT.UNSIGNED,
+        allowNull: true,
+        defaultValue: 0,
+        field: 'share_count',
+      },
+      reportCount: {
+        type: DataTypes.BIGINT.UNSIGNED,
+        allowNull: true,
+        defaultValue: 0,
+        field: 'report_count',
+      },
+      // repostCount: {
+      //   type: DataTypes.BIGINT.UNSIGNED,
+      //   allowNull: true,
+      //   defaultValue: 0,
+      //   field: 'repost_count',
+      // },
+      diggCount: {
+        type: DataTypes.BIGINT.UNSIGNED,
+        allowNull: true,
+        defaultValue: 0,
+        field: 'digg_count',
+      },
       language: {
         type: DataTypes.STRING(191),
         allowNull: true,
       },
       visibility: {
-        type: DataTypes.ENUM("public", "private", "unlisted"),
+        type: DataTypes.ENUM('public', 'private', 'unlisted'),
         allowNull: false,
-        defaultValue: "public",
+        defaultValue: 'public',
       },
-      moderation_status: {
-        type: DataTypes.ENUM("approved", "pending", "rejected"),
+      moderationStatus: {
+        type: DataTypes.ENUM('approved', 'pending', 'rejected'),
         allowNull: false,
-        defaultValue: "approved",
+        defaultValue: 'approved',
+        field: 'moderation_status',
       },
-      cover_url: {
-        type: DataTypes.STRING(255),
-        allowNull: true,
-      },
-      thumbnail_url: {
-        type: DataTypes.STRING(255),
-        allowNull: true,
-      },
-      reading_time: {
-        type: DataTypes.INTEGER.UNSIGNED,
-        allowNull: true,
-        defaultValue: 0,
-      },
-
-      is_pinned: {
+      isPinned: {
         type: DataTypes.TINYINT(1).UNSIGNED,
         allowNull: false,
         defaultValue: 0,
+        field: 'is_pinned',
       },
-      is_featured: {
+      isFeatured: {
         type: DataTypes.TINYINT(1).UNSIGNED,
         allowNull: false,
         defaultValue: 0,
+        field: 'is_featured',
       },
-      has_media: {
-        type: DataTypes.TINYINT(1).UNSIGNED,
-        allowNull: false,
-        defaultValue: 0,
-      },
-      visibility_updated_at: {
+      visibilityUpdatedAt: {
         type: DataTypes.DATE(6),
         allowNull: true,
+        field: 'visibility_updated_at',
       },
-      published_at: {
+      publishedAt: {
         type: DataTypes.DATE(6),
         allowNull: true,
-      },
-      deleted_at: {
-        type: DataTypes.DATE(6),
-        allowNull: true,
+        field: 'published_at',
       },
     },
     {
-      tableName: "posts",
+      tableName: 'posts',
       timestamps: true,
+      paranoid: true,
       underscored: true,
-      charset: "utf8",
-      collate: "utf8_general_ci",
-      engine: "InnoDB",
-      createdAt: "created_at",
-      updatedAt: "updated_at",
+      charset: 'utf8',
+      collate: 'utf8_general_ci',
+      engine: 'InnoDB',
+      createdAt: 'createdAt',
+      updatedAt: 'updatedAt',
+      deletedAt: 'deletedAt',
     }
   );
   Post.associate = (db) => {
     Post.belongsTo(db.User, {
-      foreignKey: "author_id",
-      as: "author",
+      foreignKey: 'authorId',
+      as: 'author',
+    });
+    Post.belongsTo(db.Music, {
+      foreignKey: 'musicId',
+      as: 'music',
     });
     Post.belongsToMany(db.Topic, {
       through: db.PostTopic,
-      foreignKey: "post_id",
-      as: "topics",
+      foreignKey: 'postId',
+      as: 'topics',
     });
     Post.hasMany(db.PostTopic, {
-      foreignKey: "post_id",
-      as: "postTopics",
+      foreignKey: 'postId',
+      as: 'postTopics',
     });
     Post.belongsToMany(db.Tag, {
       through: db.PostTag,
-      foreignKey: "post_id",
-      as: "tags",
+      foreignKey: 'postId',
+      as: 'tags',
     });
     Post.hasMany(db.PostTag, {
-      foreignKey: "post_id",
-      as: "postTags",
+      foreignKey: 'postId',
+      as: 'postTags',
     });
     Post.hasMany(db.Comment, {
-      foreignKey: "post_id",
-      as: "comments",
+      foreignKey: 'postId',
+      as: 'comments',
     });
   };
   return Post;

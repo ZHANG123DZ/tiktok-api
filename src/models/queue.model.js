@@ -1,6 +1,6 @@
 module.exports = (sequelize, DataTypes) => {
   const Queue = sequelize.define(
-    "Queue",
+    'Queue',
     {
       type: {
         type: DataTypes.STRING(100),
@@ -9,26 +9,24 @@ module.exports = (sequelize, DataTypes) => {
       status: {
         type: DataTypes.STRING(100),
         allowNull: false,
-        defaultValue: "pending",
+        defaultValue: 'pending',
       },
       payload: {
         type: DataTypes.TEXT,
         allowNull: false,
       },
-      deleted_at: {
-        type: DataTypes.DATE(6),
-        allowNull: true,
-      },
     },
     {
-      tableName: "queues",
+      tableName: 'queues',
       timestamps: true,
+      paranoid: true,
       underscored: true,
-      charset: "utf8",
-      collate: "utf8_general_ci",
-      engine: "InnoDB",
-      createdAt: "created_at",
-      updatedAt: "updated_at",
+      charset: 'utf8',
+      collate: 'utf8_general_ci',
+      engine: 'InnoDB',
+      createdAt: 'createdAt',
+      updatedAt: 'updatedAt',
+      deletedAt: 'deletedAt',
     }
   );
   return Queue;

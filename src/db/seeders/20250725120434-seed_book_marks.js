@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
@@ -25,17 +25,17 @@ module.exports = {
         bookmarks.push({
           user_id: user.id,
           book_mark_able_id: post.id,
-          book_mark_able_type: "post",
+          book_mark_able_type: 'post',
           created_at: new Date(),
           updated_at: new Date(),
         });
       }
     }
 
-    await queryInterface.bulkInsert("book_marks", bookmarks);
+    await queryInterface.bulkInsert('book_marks', bookmarks);
   },
 
   async down(queryInterface, Sequelize) {
-    await queryInterface.bulkDelete("book_marks", null, {});
+    await queryInterface.bulkDelete('book_marks', null, {});
   },
 };

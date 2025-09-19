@@ -1,42 +1,45 @@
 module.exports = (sequelize, DataTypes) => {
   const BookMark = sequelize.define(
-    "BookMark",
+    'BookMark',
     {
-      user_id: {
+      userId: {
         type: DataTypes.BIGINT.UNSIGNED,
         allowNull: false,
+        field: 'user_id',
       },
-      book_mark_able_id: {
+      bookMarkAbleId: {
         type: DataTypes.BIGINT.UNSIGNED,
         allowNull: false,
+        field: 'book_mark_able_id',
       },
-      book_mark_able_type: {
+      bookMarkAbleType: {
         type: DataTypes.TEXT,
         allowNull: false,
+        field: 'book_mark_able_type',
       },
     },
     {
-      tableName: "book_marks",
+      tableName: 'book_marks',
       timestamps: true,
       underscored: true,
-      charset: "utf8",
-      collate: "utf8_general_ci",
-      engine: "InnoDB",
-      createdAt: "created_at",
-      updatedAt: "updated_at",
+      charset: 'utf8',
+      collate: 'utf8_general_ci',
+      engine: 'InnoDB',
+      createdAt: 'createdAt',
+      updatedAt: 'updatedAt',
       indexes: [
         {
-          name: "unique_book_mark_user_target",
+          name: 'unique_book_mark_user_target',
           unique: true,
-          fields: ["user_id", "book_mark_able_type", "book_mark_able_id"],
+          fields: ['user_id', 'book_mark_able_type', 'book_mark_able_id'],
         },
       ],
     }
   );
   BookMark.associate = (db) => {
     BookMark.belongsTo(db.User, {
-      foreignKey: "user_id",
-      as: "user",
+      foreignKey: 'user_id',
+      as: 'user',
     });
   };
   return BookMark;

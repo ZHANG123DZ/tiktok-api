@@ -1,6 +1,6 @@
-"use strict";
+'use strict';
 
-const { faker } = require("@faker-js/faker");
+const { faker } = require('@faker-js/faker');
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
@@ -23,30 +23,30 @@ module.exports = {
 
       // Chọn loại thông báo
       const type = faker.helpers.arrayElement([
-        "new_post",
-        "new_comment",
-        "like",
-        "follow",
+        'new_post',
+        'new_comment',
+        'like',
+        'follow',
       ]);
 
       let notifiable_id;
       let notifiable_type;
 
-      if (type === "follow") {
+      if (type === 'follow') {
         // follow → liên kết với User
         const targetUser = faker.helpers.arrayElement(userRows);
         notifiable_id = targetUser.id;
-        notifiable_type = "User";
-      } else if (type === "new_comment") {
+        notifiable_type = 'User';
+      } else if (type === 'new_comment') {
         // new_comment → liên kết với Comment
         const comment = faker.helpers.arrayElement(commentRows);
         notifiable_id = comment?.id || 1;
-        notifiable_type = "Comment";
+        notifiable_type = 'Comment';
       } else {
         // new_post hoặc like → liên kết với Post
         const post = faker.helpers.arrayElement(postRows);
         notifiable_id = post?.id || 1;
-        notifiable_type = "Post";
+        notifiable_type = 'Post';
       }
 
       notifications.push({
@@ -60,10 +60,10 @@ module.exports = {
       });
     }
 
-    await queryInterface.bulkInsert("notifications", notifications);
+    await queryInterface.bulkInsert('notifications', notifications);
   },
 
   async down(queryInterface, Sequelize) {
-    await queryInterface.bulkDelete("notifications", null, {});
+    await queryInterface.bulkDelete('notifications', null, {});
   },
 };

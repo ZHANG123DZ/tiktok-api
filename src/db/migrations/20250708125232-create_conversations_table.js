@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
@@ -9,27 +9,28 @@ module.exports = {
      * Example:
      * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
      */
-    queryInterface.createTable("conversations", {
+    queryInterface.createTable('conversations', {
       id: {
         type: Sequelize.BIGINT.UNSIGNED,
         autoIncrement: true,
         primaryKey: true,
-        allowNull: false,
       },
-      avatar_url: {
+      avatar: {
         type: Sequelize.STRING(255),
       },
       name: {
         type: Sequelize.STRING(255),
       },
+      is_group: {
+        type: Sequelize.BOOLEAN,
+      },
       created_at: {
         type: Sequelize.DATE(6),
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP(6)"),
       },
       updated_at: {
         type: Sequelize.DATE(6),
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP(6)"),
-        onUpdate: Sequelize.literal("CURRENT_TIMESTAMP(6)"),
+
+        onUpdate: Sequelize.literal('CURRENT_TIMESTAMP(6)'),
       },
       deleted_at: {
         type: Sequelize.DATE(6),
@@ -44,6 +45,6 @@ module.exports = {
      * Example:
      * await queryInterface.dropTable('users');
      */
-    await queryInterface.dropTable("conversations");
+    await queryInterface.dropTable('conversations');
   },
 };

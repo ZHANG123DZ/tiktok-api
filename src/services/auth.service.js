@@ -1,17 +1,17 @@
-const bcrypt = require("bcrypt");
-const otpGenerator = require("otp-generator");
+const bcrypt = require('bcrypt');
+const otpGenerator = require('otp-generator');
 const {
-  RefreshToken,
   User,
   Email,
-  Skill,
-  Badge,
+  VerificationCode,
   UserSetting,
-} = require("@/models/index");
-const accessToken = require("@/utils/accessToken");
-const { Op } = require("sequelize");
-const generateUsernameFromEmail = require("@/utils/generateUsernameFromEmail");
-const refreshToken = require("@/utils/refreshToken");
+} = require('@/models/index');
+const accessToken = require('@/utils/accessToken');
+const { Op } = require('sequelize');
+const generateUsername = require('@/utils/generateUsername');
+const refreshToken = require('@/utils/refreshToken');
+const toDate = require('@/utils/toDate');
+const getExpiry = require('@/utils/getExpiry');
 
 class authService {
   async auth(token) {
@@ -19,37 +19,22 @@ class authService {
     if (!auth) return null;
     const user = await User.findOne({
       where: { id: auth.sub },
-      include: [
-        {
-          model: Skill,
-          as: "skillList",
-        },
-        {
-          model: Badge,
-          as: "badgeList",
-        },
-      ],
       attributes: [
-        "id",
-        "email",
-        "username",
-        "full_name",
-        "first_name",
-        "last_name",
-        "avatar_url",
-        "cover_url",
-        "title",
-        "bio",
-        "post_count",
-        "follower_count",
-        "following_count",
-        "like_count",
-        "location",
-        "website",
-        "created_at",
-        "social",
-        "two_factor_enabled",
-        "verified_at",
+        'id',
+        'email',
+        'username',
+        'name',
+        'firstName',
+        'lastName',
+        'avatar',
+        'bio',
+        'followerCount',
+        'followingCount',
+        'postCount',
+        'likeCount',
+        'createdAt',
+        'twoFactorEnabled',
+        'verifiedAt',
       ],
     });
     return user;
@@ -57,53 +42,26 @@ class authService {
   async refreshTok(token) {
     const auth = refreshToken.verify(token);
     if (!auth) return null;
-    const user = await User.findOne({
-      where: { id: auth.sub },
-      include: [
-        {
-          model: Skill,
-          as: "skillList",
-        },
-        {
-          model: Badge,
-          as: "badgeList",
-        },
-      ],
-      attributes: [
-        "id",
-        "email",
-        "username",
-        "full_name",
-        "first_name",
-        "last_name",
-        "avatar_url",
-        "cover_url",
-        "title",
-        "bio",
-        "post_count",
-        "follower_count",
-        "following_count",
-        "like_count",
-        "location",
-        "website",
-        "created_at",
-        "social",
-        "two_factor_enabled",
-        "verified_at",
-      ],
-    });
-    return user;
+    try {
+      const user = await User.findOne({
+        where: { id: auth.sub },
+        attributes: ['id'],
+      });
+      return user;
+    } catch (err) {
+      throw new Error(err);
+    }
   }
 
   async login(data) {
     const auth = await User.findOne({ where: { email: data?.email } });
     if (!auth) {
-      throw new Error("Dang nhap that bai");
+      throw new Error('Dang nhap that bai');
     }
 
     const isMatch = await bcrypt.compare(data.password, auth.password);
     if (!isMatch) {
-      throw new Error("Dang nhap that bai");
+      throw new Error('Dang nhap that bai');
     }
     delete auth.password;
     return auth.dataValues;
@@ -111,18 +69,33 @@ class authService {
 
   async register(data) {
     const saltRounds = 10;
-    data.password = await bcrypt.hash(data.password, saltRounds);
-    if (!data.username) {
-      const username = await generateUsernameFromEmail(data);
+    const {
+      username,
+      email,
+      phone,
+      name,
+      password,
+      firstName,
+      lastName,
+      day,
+      month,
+      year,
+    } = data;
+    data.password = await bcrypt.hash(password, saltRounds);
+    data.birthday = toDate(day, month, year);
+    if (!username) {
+      const identifier = email || phone;
+      const username = await generateUsername(identifier);
       data.username = username;
     }
-    if (!data.full_name) {
-      const full_name = `${data.first_name} ${data.last_name}`;
-      data.full_name = full_name;
-    }
-    const auth = await User.create(data);
-    await UserSetting.create({ user_id: auth.dataValues.id });
 
+    if (!name) {
+      const name = data.username;
+      data.name = name;
+    }
+
+    const auth = await User.create(data);
+    await UserSetting.create({ userId: auth.dataValues.id });
     return auth.dataValues;
   }
 
@@ -132,88 +105,112 @@ class authService {
   }
 
   async userSetting(id) {
-    const userSetting = await UserSetting.findOne({ where: { user_id: id } });
+    const userSetting = await UserSetting.findOne({ where: { userId: id } });
     return userSetting.dataValues;
   }
 
   async settings(id, data) {
-    const user = await UserSetting.update(data, { where: { user_id: id } });
+    const user = await UserSetting.update(data, { where: { userId: id } });
     return user.dataValues;
   }
 
-  async sendForgotEmail(email) {
+  async sendForgotPassword(email) {
     const user = await User.findOne({ where: { email } });
     return user.dataValues;
   }
 
-  async resetPassword(id, password) {
+  async resetPassword(identifier, password) {
     const saltRounds = 10;
     const newPassword = await bcrypt.hash(password, saltRounds);
-    const user = await User.update(
+
+    const [updatedCount] = await User.update(
       { password: newPassword },
-      { where: { id } }
+      {
+        where: {
+          [Op.or]: [{ email: identifier }, { phone: identifier }],
+        },
+      }
     );
-    return user.dataValues;
+
+    if (updatedCount === 0) {
+      throw new Error('Không tìm thấy user với email hoặc phone này');
+    }
+
+    const user = await User.findOne({
+      where: {
+        [Op.or]: [{ email: identifier }, { phone: identifier }],
+      },
+      attributes: { exclude: ['password'] },
+    });
+
+    return user;
   }
 
   async changePassword(userId, data) {
     const { currentPassword, newPassword } = data;
-    const saltRounds = 10;
-    const currentPass = await bcrypt.hash(currentPassword, saltRounds);
-    const newPass = await bcrypt.hash(newPassword, saltRounds);
 
     const curUser = await User.findOne({ where: { id: userId } });
-    if (curUser.dataValues.password != currentPass)
-      return Error("Mật khẩu không chính xác");
+    if (!curUser) {
+      throw new Error('User không tồn tại');
+    }
 
-    const userUpdated = await User.update(
-      { password: newPass },
-      { where: { id: userId } }
-    );
-    return userUpdated.dataValues;
+    const isMatch = await bcrypt.compare(currentPassword, curUser.password);
+    if (!isMatch) {
+      throw new Error('Mật khẩu hiện tại không chính xác');
+    }
+
+    const saltRounds = 10;
+    const newHashedPass = await bcrypt.hash(newPassword, saltRounds);
+
+    await User.update({ password: newHashedPass }, { where: { id: userId } });
+
+    return { success: true, message: 'Đổi mật khẩu thành công' };
   }
 
-  async sendCode(data) {
-    //Tạo mã OTP
-    const otp = otpGenerator.generate(6, {
+  async sendCode({ data, target, userId }) {
+    const { action } = data;
+    const codeOtp = otpGenerator.generate(6, {
       digits: true,
       upperCaseAlphabets: false,
       lowerCaseAlphabets: false,
       specialChars: false,
     });
-    data.body = JSON.stringify({ otp_code: otp });
-    data.expired_at = new Date(Date.now() + 1000 * 60);
-    data.type = "verification";
-    const code = await Email.create(data);
+    const expiresAt = getExpiry(action);
+    const code = await VerificationCode.create({
+      code: codeOtp,
+      expiresAt,
+      userId,
+      action,
+      target,
+    });
     return code.dataValues;
   }
 
-  async verifyEmail(data) {
-    const auth = await Email.findOne({
+  async verifyCode({ target, action, code }) {
+    const record = await VerificationCode.findOne({
       where: {
-        email: data.email,
-        otp_code: data.code,
-        type: "verification",
-        expired_at: {
+        target,
+        action,
+        code,
+        expiresAt: {
           [Op.gt]: new Date(),
         },
-        verified_at: null,
       },
-      order: [["created_at", "DESC"]],
+      order: [['createdAt', 'DESC']],
     });
 
-    if (!auth) {
-      throw new Error("Mã xác thực không tồn tại, sai mã hoặc đã hết hạn.");
-    }
+    if (!record) throw new Error('Mã không hợp lệ');
+    if (record.usedAt) throw new Error('Mã đã được sử dụng');
+    if (record.expiresAt < new Date()) throw new Error('Mã đã hết hạn');
 
-    await auth.update({ verified_at: new Date() });
-
-    return auth.dataValues;
+    record.usedAt = new Date();
+    await record.save();
+    return true;
   }
 
-  async checkEmail(data) {
+  async checkEmail(email) {
     const exits = await User.findOne({
-      where: { email: data.email },
+      where: { email },
     });
     if (!exits) {
       return false;
@@ -221,9 +218,9 @@ class authService {
     return true;
   }
 
-  async checkUsername(data) {
+  async checkUsername(username) {
     const auth = await User.findOne({
-      where: { username: data.username },
+      where: { username },
     });
     if (!auth) {
       return null;
@@ -231,8 +228,14 @@ class authService {
     return auth.dataValues;
   }
 
-  async logout(id) {
-    return post;
+  async checkPhone(phone) {
+    const auth = await User.findOne({
+      where: { phone },
+    });
+    if (!auth) {
+      return null;
+    }
+    return auth.dataValues;
   }
 }
 

@@ -1,106 +1,86 @@
-"use strict";
+'use strict';
 
 /** @type {import('sequelize-cli').Migration} */
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     await queryInterface.createTable(
-      "user_settings",
+      'user_settings',
       {
         user_id: {
           type: Sequelize.BIGINT.UNSIGNED,
-          allowNull: false,
           primaryKey: true,
+          onDelete: 'CASCADE',
+          onUpdate: 'CASCADE',
           references: {
-            model: "users",
-            key: "id",
+            model: 'users',
+            key: 'id',
           },
-          onDelete: "CASCADE",
-          onUpdate: "CASCADE",
         },
 
         // Giao diện
         theme: {
-          type: Sequelize.ENUM("dark", "light"),
-          defaultValue: "light",
+          type: Sequelize.ENUM('dark', 'light'),
+        },
+        location: {
+          type: Sequelize.STRING(100),
         },
         language: {
           type: Sequelize.STRING(100),
-          defaultValue: "english",
         },
-        profileVisibility: {
-          type: Sequelize.ENUM("public", "followers", "private"),
-          defaultValue: "public",
+        profile_visibility: {
+          type: Sequelize.ENUM('public', 'followers', 'private'),
         },
 
-        defaultPostVisibility: {
-          type: Sequelize.ENUM("public", "private", "draft"),
-          defaultValue: "public",
+        post_visibility: {
+          type: Sequelize.ENUM('public', 'private', 'draft'),
         },
-        requireCommentApproval: {
+        require_comment_approval: {
           type: Sequelize.TINYINT(1),
-          defaultValue: 0,
         },
-        twoFactorEnabled: {
+        two_factor_enabled: {
           type: Sequelize.TINYINT(1),
-          defaultValue: 0,
         },
         // Riêng tư
-        requireCommentApproval: {
-          type: Sequelize.TINYINT(1),
-          defaultValue: 0,
-        },
-        allowDirectMessages: {
+        allow_direct_messages: {
           type: Sequelize.STRING(100),
-          defaultValue: "everyone",
         },
-        allowComments: {
+        allow_comments: {
           type: Sequelize.TINYINT(1),
-          defaultValue: 1,
         },
-        searchEngineIndexing: {
+        search_engine_indexing: {
           type: Sequelize.TINYINT(1),
-          defaultValue: 1,
         },
-        showViewCounts: {
+        show_view_counts: {
           type: Sequelize.TINYINT(1),
-          defaultValue: 1,
         },
-        showEmail: {
+        show_email: {
           type: Sequelize.TINYINT(1),
-          defaultValue: 1,
         },
 
         // Thông báo
-        emailNewLikes: {
+        email_new_likes: {
           type: Sequelize.TINYINT(1),
-          defaultValue: 1,
         },
-        emailNewComments: {
+        email_new_comments: {
           type: Sequelize.TINYINT(1),
-          defaultValue: 1,
         },
-        emailNewFollowers: {
+        email_new_followers: {
           type: Sequelize.TINYINT(1),
-          defaultValue: 1,
         },
-        emailWeeklyDigest: {
+        email_weekly_digest: {
           type: Sequelize.TINYINT(1),
-          defaultValue: 1,
         },
-        pushNotifications: {
+        push_notifications: {
           type: Sequelize.TINYINT(1),
-          defaultValue: 1,
         },
         // Timestamp
         created_at: {
           type: Sequelize.DATE,
-          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
         },
         updated_at: {
           type: Sequelize.DATE(6),
-          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP(6)"),
-          onUpdate: Sequelize.literal("CURRENT_TIMESTAMP(6)"),
+          onUpdate: Sequelize.literal('CURRENT_TIMESTAMP(6)'),
         },
         deleted_at: {
           type: Sequelize.DATE(6),
@@ -108,14 +88,14 @@ module.exports = {
       },
       {
         timestamps: true,
-        charset: "utf8",
-        collate: "utf8_general_ci",
-        engine: "InnoDB",
+        charset: 'utf8',
+        collate: 'utf8_general_ci',
+        engine: 'InnoDB',
       }
     );
   },
 
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.dropTable("user_settings");
+    await queryInterface.dropTable('user_settings');
   },
 };

@@ -1,7 +1,7 @@
-const pusher = require("@/configs/pusher");
-const incrementField = require("@/helper/incrementField");
-const { Follow, User, Post, Notification } = require("@/models/index");
-const { getFollowTargetByType } = require("@/utils/followTarget");
+const pusher = require('@/configs/pusher');
+const incrementField = require('@/helper/incrementField');
+const { Follow, User, Post, Notification } = require('@/models/index');
+const { getFollowTargetByType } = require('@/utils/followTarget');
 
 class FollowsService {
   async getFollowers(type, followAbleId) {
@@ -9,20 +9,20 @@ class FollowsService {
 
     const { rows: items, count: total } = await Follow.findAndCountAll({
       where: {
-        follow_able_id: followAbleId,
-        follow_able_type: type,
+        followAbleId,
+        followAbleType: type,
       },
-      attributes: ["user_id"],
+      attributes: ['userId'],
     });
 
-    const ids = items.map((f) => f.user_id);
+    const ids = items.map((f) => f.userId);
     if (ids.length === 0) {
       return { data: [], total };
     }
 
     const users = await User.findAll({
       where: { id: ids },
-      attributes: ["id", "username", "avatar_url", "full_name"],
+      attributes: ['id', 'username', 'avatar', 'name'],
     });
     return { users, total };
   }
@@ -32,13 +32,13 @@ class FollowsService {
 
     const { rows: items, count: total } = await Follow.findAndCountAll({
       where: {
-        user_id: userId,
-        follow_able_type: type,
+        userId,
+        followAbleType: type,
       },
-      attributes: ["follow_able_id"],
+      attributes: ['followAbleId'],
     });
 
-    const ids = items.map((f) => f.follow_able_id);
+    const ids = items.map((f) => f.followAbleId);
     if (ids.length === 0) {
       return { data: [], total };
     }
@@ -56,32 +56,32 @@ class FollowsService {
     if (!targetFollow || !userId) return false;
 
     const where = {
-      user_id: userId,
-      follow_able_type: type,
-      follow_able_id: followAbleId,
+      userId,
+      followAbleType: type,
+      followAbleId,
     };
 
     const exists = await Follow.findOne({
       where,
-      attributes: ["id", "user_id", "follow_able_id", "follow_able_type"],
+      attributes: ['id', 'userId', 'followAbleId', 'followAbleType'],
     });
 
     if (exists) {
       return false;
     }
     await Follow.create(where);
-    await incrementField(Model, "follower_count", +1, { id: followAbleId });
+    await incrementField(Model, 'followerCount', +1, { id: followAbleId });
     const notify = await Notification.create({
-      type: "follow",
-      user_id: followAbleId,
-      notifiable_id: userId,
-      notifiable_type: "User",
-      created_at: new Date(),
-      updated_at: new Date(),
+      type: 'follow',
+      userId: followAbleId,
+      notifiableId: userId,
+      notifiableType: 'User',
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
     pusher.trigger(
-      `notification-user-${followAbleId}`,
-      "new-notification",
+      `notifications-user-${followAbleId}`,
+      'new-notification',
       notify
     );
     return true;
@@ -95,14 +95,14 @@ class FollowsService {
     if (!targetFollow || !user) return false;
 
     const where = {
-      user_id: userId,
-      follow_able_type: type,
-      follow_able_id: followAbleId,
+      userId,
+      followAbleType: type,
+      followAbleId,
     };
     await Follow.destroy({
       where: where,
     });
-    await incrementField(Model, "follower_count", -1, { id: followAbleId });
+    await incrementField(Model, 'followerCount', -1, { id: followAbleId });
     return;
   }
 
@@ -114,14 +114,14 @@ class FollowsService {
     if (!targetFollow || !user) return false;
 
     const where = {
-      user_id: userId,
-      follow_able_type: type,
-      follow_able_id: followAbleId,
+      userId,
+      followAbleType: type,
+      followAbleId,
     };
 
     const exits = await Follow.findOne({
       where: where,
-      attributes: ["id", "user_id", "follow_able_id", "follow_able_type"],
+      attributes: ['id', 'userId', 'followAbleId', 'followAbleType'],
     });
     return !!exits;
   }

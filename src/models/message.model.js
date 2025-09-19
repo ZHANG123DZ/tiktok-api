@@ -1,59 +1,84 @@
 module.exports = (sequelize, DataTypes) => {
   const Message = sequelize.define(
-    "Message",
+    'Message',
     {
-      user_id: {
+      userId: {
         type: DataTypes.BIGINT.UNSIGNED,
         allowNull: false,
         references: {
-          model: "users",
-          key: "id",
+          model: 'users',
+          key: 'id',
         },
-        onDelete: "CASCADE",
-        onUpdate: "CASCADE",
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+        filed: 'user_id',
       },
-      conversation_id: {
+      conversationId: {
         type: DataTypes.BIGINT.UNSIGNED,
         allowNull: false,
         references: {
-          model: "conversations",
-          key: "id",
+          model: 'conversations',
+          key: 'id',
         },
-        onDelete: "CASCADE",
-        onUpdate: "CASCADE",
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+        field: 'conversation_id',
+      },
+      parentId: {
+        type: DataTypes.BIGINT.UNSIGNED,
+        allowNull: true,
+        references: {
+          model: 'messages',
+          key: 'id',
+        },
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+        defaultValue: null,
+        field: 'parent_id',
       },
       content: {
         type: DataTypes.TEXT,
         allowNull: false,
       },
-      deleted_at: {
-        type: DataTypes.DATE(6),
+      reactions: {
+        type: DataTypes.JSON,
         allowNull: true,
       },
     },
     {
-      tableName: "messages",
+      tableName: 'messages',
       timestamps: true,
+      paranoid: true,
       underscored: true,
-      charset: "utf8",
-      collate: "utf8_general_ci",
-      engine: "InnoDB",
-      createdAt: "created_at",
-      updatedAt: "updated_at",
+      charset: 'utf8',
+      collate: 'utf8_general_ci',
+      engine: 'InnoDB',
+      createdAt: 'createdAt',
+      updatedAt: 'updatedAt',
+      deletedAt: 'deletedAt',
     }
   );
   Message.associate = (db) => {
     Message.belongsTo(db.User, {
-      foreignKey: "user_id",
-      as: "sender",
+      foreignKey: 'user_id',
+      as: 'sender',
+    });
+    Message.belongsTo(db.Message, {
+      foreignKey: 'parent_id',
+      as: 'parent',
+    });
+
+    Message.hasMany(db.Message, {
+      foreignKey: 'parent_id',
+      as: 'replies',
     });
     Message.belongsTo(db.Conversation, {
-      foreignKey: "conversation_id",
-      as: "conversation",
+      foreignKey: 'conversation_id',
+      as: 'conversation',
     });
     Message.hasMany(db.MessageRead, {
-      foreignKey: "message_id",
-      as: "reads",
+      foreignKey: 'message_id',
+      as: 'reads',
     });
   };
   return Message;

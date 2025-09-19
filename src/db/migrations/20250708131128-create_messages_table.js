@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
@@ -9,42 +9,54 @@ module.exports = {
      * Example:
      * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
      */
-    await queryInterface.createTable("messages", {
+    await queryInterface.createTable('messages', {
       id: {
         type: Sequelize.BIGINT.UNSIGNED,
         autoIncrement: true,
         primaryKey: true,
-        allowNull: false,
       },
       user_id: {
         type: Sequelize.BIGINT.UNSIGNED,
         references: {
-          model: "users",
-          key: "id",
+          model: 'users',
+          key: 'id',
         },
-        onDelete: "CASCADE",
-        onUpdate: "CASCADE",
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
       },
       conversation_id: {
         type: Sequelize.BIGINT.UNSIGNED,
         references: {
-          model: "conversations",
-          key: "id",
+          model: 'conversations',
+          key: 'id',
         },
-        onDelete: "CASCADE",
-        onUpdate: "CASCADE",
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+      },
+      parent_id: {
+        type: Sequelize.BIGINT.UNSIGNED,
+        references: {
+          model: 'messages',
+          key: 'id',
+        },
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
       },
       content: {
         type: Sequelize.TEXT,
       },
+      type: {
+        type: Sequelize.TEXT,
+      },
+      reactions: {
+        type: Sequelize.JSON,
+      },
       created_at: {
         type: Sequelize.DATE(6),
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP(6)"),
       },
       updated_at: {
         type: Sequelize.DATE(6),
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP(6)"),
-        onUpdate: Sequelize.literal("CURRENT_TIMESTAMP(6)"),
+        onUpdate: Sequelize.literal('CURRENT_TIMESTAMP(6)'),
       },
       deleted_at: {
         type: Sequelize.DATE(6),
@@ -59,6 +71,6 @@ module.exports = {
      * Example:
      * await queryInterface.dropTable('users');
      */
-    await queryInterface.dropTable("messages");
+    await queryInterface.dropTable('messages');
   },
 };

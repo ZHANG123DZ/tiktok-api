@@ -1,47 +1,49 @@
 module.exports = (sequelize, DataTypes) => {
   const PostTag = sequelize.define(
-    "PostTag",
+    'PostTag',
     {
-      post_id: {
+      postId: {
         type: DataTypes.BIGINT.UNSIGNED,
         allowNull: false,
         references: {
-          model: "posts",
-          key: "id",
+          model: 'posts',
+          key: 'id',
         },
-        onDelete: "CASCADE",
-        onUpdate: "CASCADE",
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+        field: 'post_id',
       },
-      tag_id: {
+      tagId: {
         type: DataTypes.BIGINT.UNSIGNED,
         allowNull: false,
         references: {
-          model: "tags",
-          key: "id",
+          model: 'tags',
+          key: 'id',
         },
-        onDelete: "CASCADE",
-        onUpdate: "CASCADE",
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+        field: 'tag_id',
       },
     },
     {
-      tableName: "post_tags",
+      tableName: 'post_tags',
       timestamps: true,
       underscored: true,
-      charset: "utf8",
-      collate: "utf8_general_ci",
-      engine: "InnoDB",
-      createdAt: "created_at",
-      updatedAt: "updated_at",
+      charset: 'utf8',
+      collate: 'utf8_general_ci',
+      engine: 'InnoDB',
+      createdAt: 'createdAt',
+      updatedAt: 'updatedAt',
     }
   );
   PostTag.associate = (db) => {
     PostTag.belongsTo(db.Post, {
-      foreignKey: "post_id",
-      as: "post",
+      foreignKey: 'post_id',
+      as: 'post',
     });
     PostTag.belongsTo(db.Tag, {
-      foreignKey: "tag_id",
-      as: "tag",
+      foreignKey: 'tag_id',
+      as: 'tag',
     });
   };
   return PostTag;

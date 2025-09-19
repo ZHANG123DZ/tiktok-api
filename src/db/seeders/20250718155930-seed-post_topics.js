@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
@@ -28,7 +28,7 @@ module.exports = {
       }
     }
 
-    await queryInterface.bulkInsert("post_topics", postTopics);
+    await queryInterface.bulkInsert('post_topics', postTopics);
     await queryInterface.sequelize.query(`
       UPDATE topics
       SET post_count = (
@@ -38,7 +38,7 @@ module.exports = {
   },
 
   async down(queryInterface, Sequelize) {
-    await queryInterface.bulkDelete("post_topics", null, {});
+    await queryInterface.bulkDelete('post_topics', null, {});
     await queryInterface.sequelize.query(`
       UPDATE topics SET post_count = 0
     `);

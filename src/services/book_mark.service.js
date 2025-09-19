@@ -1,5 +1,6 @@
-const { BookMark, User, Post, Topic } = require("@/models/index");
-const { getBookMarkTargetByType } = require("@/utils/bookMarkTarget");
+const checkPostInteractions = require('@/helper/checkPostInteractions');
+const { BookMark, User, Post, Topic } = require('@/models/index');
+const { getBookMarkTargetByType } = require('@/utils/bookMarkTarget');
 
 class BookMarksService {
   async getBookMarks(type, bookmarkAbleId) {
@@ -7,33 +8,36 @@ class BookMarksService {
 
     const { rows: items, count: total } = await BookMark.findAndCountAll({
       where: {
-        book_mark_able_id: bookmarkAbleId,
-        book_mark_able_type: type,
+        bookMarkAbleId: bookmarkAbleId,
+        bookMarkAbleType: type,
       },
-      attributes: ["user_id"],
+      attributes: ['userId'],
     });
 
-    const ids = items.map((f) => f.user_id);
+    const ids = items.map((f) => f.userId);
     if (ids.length === 0) {
       return { data: [], total };
     }
 
     const users = await User.findAll({
       where: { id: ids },
-      attributes: ["id", "username", "avatar_url", "full_name"],
+      attributes: ['id', 'username', 'avatar', 'name'],
     });
     return { users, total };
   }
 
-  async getBookMarkedUserId(userId, type) {
-    const { model: Model, attributes } = getBookMarkTargetByType(type);
+  async getBookMarkedUserId(userId, type, page, limit) {
+    const offset = (page - 1) * limit;
+    const { model: Model } = getBookMarkTargetByType(type);
 
     const { rows: bookmarks, count: total } = await BookMark.findAndCountAll({
       where: {
-        user_id: userId,
-        book_mark_able_type: type,
+        userId,
+        bookMarkAbleType: type,
       },
-      attributes: ["book_mark_able_id", "created_at"],
+      limit,
+      offset,
+      attributes: ['bookMarkAbleId', 'createdAt'],
     });
 
     if (bookmarks.length === 0) {
@@ -44,33 +48,38 @@ class BookMarksService {
     const ids = [];
 
     bookmarks.forEach((b) => {
-      ids.push(b.book_mark_able_id);
-      bookmarkTimeMap.set(b.book_mark_able_id, b.created_at);
+      ids.push(b.bookMarkAbleId);
+      bookmarkTimeMap.set(b.bookMarkAbleId, b.createdAt);
     });
 
-    const bookMarks = await Model.findAll({
+    const posts = await Model.findAll({
       where: { id: ids },
       include: [
         {
           model: User,
-          as: "author",
-          attributes: ["id", "full_name", "username", "avatar_url"],
+          as: 'author',
+          attributes: ['id', 'name', 'username', 'avatar'],
         },
         {
           model: Topic,
-          as: "topics",
-          attributes: ["id", "name", "slug"],
+          as: 'topics',
+          attributes: ['id', 'name', 'slug'],
         },
       ],
     });
 
-    const result = bookMarks.map((item) => {
-      const data = item.toJSON();
-      data.bookMarkedAt = bookmarkTimeMap.get(item.id);
-      return data;
+    const interactions = await checkPostInteractions(ids, userId);
+
+    const result = posts.map((post) => {
+      const plain = post.get({ plain: true });
+      const { isLiked, isBookMarked } = interactions.get(post.id) || {};
+      plain.isLiked = isLiked || false;
+      plain.isBookMarked = isBookMarked || false;
+      plain.bookMarkedAt = bookmarkTimeMap.get(post.id);
+      return plain;
     });
 
-    return { bookMarks: result, total };
+    return { bookMarks: result, total, limit };
   }
 
   async bookmark(userId, type, bookmarkAbleId) {
@@ -82,14 +91,14 @@ class BookMarksService {
     if (!targetBookMark || !user) return false;
 
     const where = {
-      user_id: userId,
-      book_mark_able_type: type,
-      book_mark_able_id: bookmarkAbleId,
+      userId,
+      bookMarkAbleType: type,
+      bookMarkAbleId: bookmarkAbleId,
     };
 
     const exists = await BookMark.findOne({
       where,
-      attributes: ["id", "user_id", "book_mark_able_id", "book_mark_able_type"],
+      attributes: ['id', 'userId', 'bookMarkAbleId', 'bookMarkAbleType'],
     });
 
     if (exists) {
@@ -110,9 +119,9 @@ class BookMarksService {
     if (!targetBookMark || !user) return false;
 
     const where = {
-      user_id: userId,
-      book_mark_able_type: type,
-      book_mark_able_id: bookmarkAbleId,
+      userId,
+      bookMarkAbleType: type,
+      bookMarkAbleId: bookmarkAbleId,
     };
     const deleted = await BookMark.destroy({
       where: where,
@@ -130,21 +139,21 @@ class BookMarksService {
     if (!targetBookMark || !user) return false;
 
     const where = {
-      user_id: userId,
-      book_mark_able_type: type,
-      book_mark_able_id: bookmarkAbleId,
+      userId,
+      bookMarkAbleType: type,
+      bookMarkAbleId: bookmarkAbleId,
     };
 
     const exits = await BookMark.findOne({
       where: where,
-      attributes: ["id", "user_id", "book_mark_able_id", "book_mark_able_type"],
+      attributes: ['id', 'userId', 'bookmarkAbleId', 'bookMarkAbleType'],
     });
     return !!exits;
   }
 
   async deleteAllBookMark(userId, type) {
     const result = await BookMark.destroy({
-      where: { user_id: userId, book_mark_able_type: type },
+      where: { userId, bookMarkAbleType: type },
     });
     return result;
   }

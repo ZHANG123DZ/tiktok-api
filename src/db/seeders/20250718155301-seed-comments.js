@@ -1,5 +1,5 @@
-"use strict";
-const { faker } = require("@faker-js/faker");
+'use strict';
+const { faker } = require('@faker-js/faker');
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
@@ -12,7 +12,7 @@ module.exports = {
     });
 
     if (!users.length || !posts.length) {
-      throw new Error("Seed users & posts trước khi seed comments!");
+      throw new Error('Seed users & posts trước khi seed comments!');
     }
 
     /* -------- 1. Insert 800 comment gốc -------- */
@@ -23,7 +23,7 @@ module.exports = {
 
       rootComments.push({
         post_id: post.id,
-        user_id: user.id,
+        author_id: user.id,
         content: faker.lorem.sentences(3),
         parent_id: null,
         like_count: faker.number.int({ min: 0, max: 300 }),
@@ -32,16 +32,15 @@ module.exports = {
       });
     }
 
-    // bulkInsert & lấy lại ID thật
-    await queryInterface.bulkInsert("comments", rootComments);
+    await queryInterface.bulkInsert('comments', rootComments);
 
-    // Lấy ID thật của 800 comment vừa chèn
+    /* -------- 2. Lấy lại ID root comments vừa chèn -------- */
     const insertedRoots = await queryInterface.sequelize.query(
       `SELECT id, post_id FROM comments ORDER BY id DESC LIMIT 800`,
       { type: Sequelize.QueryTypes.SELECT }
     );
 
-    /* -------- 2. Sinh reply (0‑3 mỗi comment) -------- */
+    /* -------- 3. Sinh reply cho mỗi root (0-3 reply) -------- */
     const replies = [];
     for (const root of insertedRoots) {
       const replyCount = faker.number.int({ min: 0, max: 3 });
@@ -49,9 +48,10 @@ module.exports = {
         const replyUser = faker.helpers.arrayElement(users);
         replies.push({
           post_id: root.post_id,
-          user_id: replyUser.id,
+          author_id: replyUser.id,
           content: faker.lorem.sentences(2),
-          parent_id: root.id,
+          parent_id: root.id, // luôn gắn vào root
+          like_count: faker.number.int({ min: 0, max: 100 }),
           created_at: faker.date.recent({ days: 30 }),
           updated_at: new Date(),
         });
@@ -59,10 +59,10 @@ module.exports = {
     }
 
     if (replies.length) {
-      await queryInterface.bulkInsert("comments", replies);
+      await queryInterface.bulkInsert('comments', replies);
     }
 
-    /* -------- 3. Cập nhật comment_count của mỗi post -------- */
+    /* -------- 4. Cập nhật comment_count của mỗi post -------- */
     await queryInterface.sequelize.query(`
       UPDATE posts
       SET comment_count = (
@@ -74,7 +74,7 @@ module.exports = {
   },
 
   async down(queryInterface) {
-    await queryInterface.bulkDelete("comments", null);
+    await queryInterface.bulkDelete('comments', null);
 
     // Reset comment_count về 0
     await queryInterface.sequelize.query(`UPDATE posts SET comment_count = 0`);

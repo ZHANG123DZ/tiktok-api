@@ -1,14 +1,6 @@
-const checkPostInteractions = require("@/helper/checkPostInteractions");
-const {
-  User,
-  Post,
-  UserSkill,
-  Skill,
-  UserBadge,
-  Badge,
-  Topic,
-  Follow,
-} = require("@/models/index");
+const checkFollowManyUsers = require('@/helper/checkFollowManyUsers');
+const checkPostInteractions = require('@/helper/checkPostInteractions');
+const { User, Post, Tag } = require('@/models/index');
 
 class UsersService {
   async getAll(page, limit) {
@@ -17,47 +9,33 @@ class UsersService {
     const { rows: items, count: total } = await User.findAndCountAll({
       limit,
       offset,
-      order: [["created_at", "DESC"]],
+      order: [['createdAt', 'DESC']],
     });
 
     return { items, total };
   }
 
-  async getByKey(key) {
+  async getByKey(key, userId) {
     const isId = /^\d+$/.test(key);
     const user = await User.findOne({
       where: isId ? { id: key } : { username: key },
-      include: [
-        {
-          model: Skill,
-          as: "skillList",
-        },
-        {
-          model: Badge,
-          as: "badgeList",
-        },
-      ],
       attributes: [
-        "id",
-        "username",
-        "full_name",
-        "first_name",
-        "last_name",
-        "avatar_url",
-        "cover_url",
-        "title",
-        "bio",
-        "post_count",
-        "follower_count",
-        "following_count",
-        "like_count",
-        "location",
-        "website",
-        "created_at",
-        "social",
+        'id',
+        'username',
+        'name',
+        'firstName',
+        'lastName',
+        'avatar',
+        'bio',
+        'postCount',
+        'followerCount',
+        'followingCount',
+        'likeCount',
+        'createdAt',
       ],
     });
-
+    const isFollow = await checkFollowManyUsers(userId, [user.dataValues?.id]);
+    user.dataValues.isFollow = isFollow.get(user.dataValues?.id);
     return user;
   }
 
@@ -65,39 +43,39 @@ class UsersService {
     const isId = /^\d+$/.test(key);
     const user = await User.findOne({
       where: isId ? { id: key } : { username: key },
-      attributes: ["id", "username", "avatar_url", "full_name"],
+      attributes: ['id', 'username', 'avatar', 'name'],
     });
-    if (!user) throw new Error("User not found");
+    if (!user) throw new Error('User not found');
     const offset = (page - 1) * limit;
     const { rows: posts, count: total } = await Post.findAndCountAll({
-      where: { author_id: user.id },
-      order: [["created_at", "DESC"]],
+      where: { authorId: user.id },
+      order: [['createdAt', 'DESC']],
       limit,
       offset,
       attributes: [
-        "id",
-        "title",
-        "excerpt",
-        "slug",
-        "cover_url",
-        "thumbnail_url",
-        "status",
-        "author_id",
-        "author_name",
-        "author_avatar",
-        "author_username",
-        "created_at",
-        "view_count",
-        "like_count",
-        "comment_count",
-        "published_at",
-        "reading_time",
+        'id',
+        'title',
+        'content',
+        'thumbnail',
+        'status',
+        'authorId',
+        'authorName',
+        'authorAvatar',
+        'authorUserName',
+        'createdAt',
+        'viewCount',
+        'likeCount',
+        'isPinned',
+        'isFeatured',
+        'publishedAt',
       ],
       distinct: true,
       include: [
         {
-          model: Topic,
-          as: "topics",
+          model: Tag,
+          as: 'tags',
+          attributes: ['name'],
+          through: { attributes: [] },
         },
       ],
     });
@@ -108,8 +86,19 @@ class UsersService {
     const items = posts.map((post) => {
       const plain = post.get({ plain: true });
       const { isLiked, isBookMarked } = interactions.get(post.id) || {};
+      plain.author = {
+        avatar: plain.authorAvatar,
+        username: plain.authorUserName,
+        name: plain.authorName,
+      };
+      plain.tags = post.tags.map((tag) => tag.name);
       plain.isLiked = isLiked || false;
       plain.isBookMarked = isBookMarked || false;
+
+      delete plain.authorId;
+      delete plain.authorAvatar;
+      delete plain.authorUserName;
+      delete plain.authorName;
       return plain;
     });
 

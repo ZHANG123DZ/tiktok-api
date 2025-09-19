@@ -1,53 +1,55 @@
 module.exports = (sequelize, DataTypes) => {
   const UserConversation = sequelize.define(
-    "UserConversation",
+    'UserConversation',
     {
-      id: {
-        type: DataTypes.INTEGER,
-        autoIncrement: true,
-        primaryKey: true,
-        allowNull: false,
-      },
-      user_id: {
+      userId: {
         type: DataTypes.BIGINT.UNSIGNED,
         allowNull: false,
         references: {
-          model: "users",
-          key: "id",
+          model: 'users',
+          key: 'id',
         },
-        onDelete: "CASCADE",
-        onUpdate: "CASCADE",
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+        field: 'user_id',
       },
-      conversation_id: {
+      conversationId: {
         type: DataTypes.BIGINT.UNSIGNED,
         allowNull: false,
         references: {
-          model: "conversations",
-          key: "id",
+          model: 'conversations',
+          key: 'id',
         },
-        onDelete: "CASCADE",
-        onUpdate: "CASCADE",
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+        field: 'conversation_id',
       },
     },
     {
-      tableName: "user_conversations",
+      tableName: 'user_conversations',
       timestamps: true,
       underscored: true,
-      charset: "utf8",
-      collate: "utf8_general_ci",
-      engine: "InnoDB",
-      createdAt: "created_at",
-      updatedAt: "updated_at",
+      paranoid: true,
+      charset: 'utf8',
+      collate: 'utf8_general_ci',
+      engine: 'InnoDB',
+      createdAt: 'createdAt',
+      updatedAt: 'updatedAt',
+      deletedAt: 'deletedAt',
     }
   );
   UserConversation.associate = (db) => {
     UserConversation.belongsTo(db.User, {
-      foreignKey: "user_id",
-      as: "user",
+      foreignKey: 'user_id',
+      as: 'user',
     });
     UserConversation.belongsTo(db.Conversation, {
-      foreignKey: "conversation_id",
-      as: "conversation",
+      foreignKey: 'conversation_id',
+      as: 'conversation',
+    });
+    UserConversation.hasMany(db.MessageSystem, {
+      foreignKey: 'conversation_id',
+      as: 'systemMessageThread',
     });
   };
   return UserConversation;

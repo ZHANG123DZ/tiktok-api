@@ -9,11 +9,9 @@ module.exports = {
         type: Sequelize.INTEGER,
         autoIncrement: true,
         primaryKey: true,
-        allowNull: false,
       },
       user_id: {
         type: Sequelize.BIGINT.UNSIGNED,
-        allowNull: false,
         references: {
           model: 'users',
           key: 'id',
@@ -23,7 +21,6 @@ module.exports = {
       },
       conversation_id: {
         type: Sequelize.BIGINT.UNSIGNED,
-        allowNull: false,
         references: {
           model: 'conversations',
           key: 'id',
@@ -31,15 +28,14 @@ module.exports = {
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE',
       },
+      status: {
+        type: Sequelize.ENUM('pending', 'accepted', 'blocked'),
+      },
       created_at: {
-        allowNull: false,
         type: Sequelize.DATE,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
       },
       updated_at: {
-        allowNull: false,
         type: Sequelize.DATE,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
       },
     });
   },

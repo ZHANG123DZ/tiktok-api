@@ -1,42 +1,45 @@
 module.exports = (sequelize, DataTypes) => {
   const Like = sequelize.define(
-    "Like",
+    'Like',
     {
-      user_id: {
+      userId: {
         type: DataTypes.BIGINT.UNSIGNED,
         allowNull: false,
+        field: 'user_id',
       },
-      like_able_id: {
+      likeAbleId: {
         type: DataTypes.BIGINT.UNSIGNED,
         allowNull: false,
+        field: 'like_able_id',
       },
-      like_able_type: {
+      likeAbleType: {
         type: DataTypes.TEXT,
         allowNull: false,
+        field: 'like_able_type',
       },
     },
     {
-      tableName: "likes",
+      tableName: 'likes',
       timestamps: true,
       underscored: true,
-      charset: "utf8",
-      collate: "utf8_general_ci",
-      engine: "InnoDB",
-      createdAt: "created_at",
-      updatedAt: "updated_at",
+      charset: 'utf8',
+      collate: 'utf8_general_ci',
+      engine: 'InnoDB',
+      createdAt: 'createdAt',
+      updatedAt: 'updatedAt',
       indexes: [
         {
-          name: "unique_like_user_target",
+          name: 'unique_like_user_target',
           unique: true,
-          fields: ["user_id", "like_able_type", "like_able_id"],
+          fields: ['user_id', 'like_able_type', 'like_able_id'],
         },
       ],
     }
   );
   Like.associate = (db) => {
     Like.belongsTo(db.User, {
-      foreignKey: "user_id",
-      as: "user",
+      foreignKey: 'user_id',
+      as: 'user',
     });
   };
   return Like;

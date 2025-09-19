@@ -1,6 +1,6 @@
-const incrementField = require("@/helper/incrementField");
-const { Like, User, Post, Sequelize, sequelize } = require("@/models/index");
-const { getLikeTargetByType } = require("@/utils/likeTarget");
+const incrementField = require('@/helper/incrementField');
+const { Like, User, Post, Sequelize, sequelize } = require('@/models/index');
+const { getLikeTargetByType } = require('@/utils/likeTarget');
 
 class LikesService {
   async getLikes(type, likeAbleId) {
@@ -8,20 +8,20 @@ class LikesService {
 
     const { rows: items, count: total } = await Like.findAndCountAll({
       where: {
-        like_able_id: likeAbleId,
-        like_able_type: type,
+        likeAbleId,
+        likeAbleType: type,
       },
-      attributes: ["user_id"],
+      attributes: ['userId'],
     });
 
-    const ids = items.map((f) => f.user_id);
+    const ids = items.map((f) => f.userId);
     if (ids.length === 0) {
       return { data: [], total };
     }
 
     const users = await User.findAll({
       where: { id: ids },
-      attributes: ["id", "username", "avatar_url", "full_name"],
+      attributes: ['id', 'username', 'avatar', 'name'],
     });
     return { users, total };
   }
@@ -31,13 +31,13 @@ class LikesService {
 
     const { rows: items, count: total } = await Like.findAndCountAll({
       where: {
-        user_id: userId,
-        like_able_type: type,
+        userId,
+        likeAbleType: type,
       },
-      attributes: ["like_able_id"],
+      attributes: ['likeAbleId'],
     });
 
-    const ids = items.map((f) => f.like_able_id);
+    const ids = items.map((f) => f.likeAbleId);
     if (ids.length === 0) {
       return { data: [], total };
     }
@@ -56,13 +56,13 @@ class LikesService {
     if (!targetLike || !user) return false;
 
     const where = {
-      user_id: userId,
-      like_able_type: type,
-      like_able_id: likeAbleId,
+      userId,
+      likeAbleType: type,
+      likeAbleId,
     };
     const exists = await Like.findOne({
       where,
-      attributes: ["id", "user_id", "like_able_id", "like_able_type"],
+      attributes: ['id', 'userId', 'likeAbleId', 'likeAbleType'],
     });
 
     if (exists) {
@@ -71,12 +71,12 @@ class LikesService {
 
     await Like.create(where);
 
-    await incrementField(Model, "like_count", +1, { id: likeAbleId });
+    await incrementField(Model, 'likeCount', +1, { id: likeAbleId });
 
     if (Model === Post) {
       const post = await Post.findByPk(likeAbleId);
       if (post) {
-        await incrementField(User, "like_count", +1, { id: post.author_id });
+        await incrementField(User, 'likeCount', +1, { id: post.authorId });
       }
     }
 
@@ -91,18 +91,18 @@ class LikesService {
     if (!targetLike || !user) return false;
 
     const where = {
-      user_id: userId,
-      like_able_type: type,
-      like_able_id: likeAbleId,
+      userId,
+      likeAbleType: type,
+      likeAbleId,
     };
     await Like.destroy({
       where: where,
     });
-    await incrementField(Model, "like_count", -1, { id: likeAbleId });
+    await incrementField(Model, 'likeCount', -1, { id: likeAbleId });
     if (Model === Post) {
       const post = await Post.findByPk(likeAbleId);
       if (post) {
-        await incrementField(User, "like_count", -1, { id: post.author_id });
+        await incrementField(User, 'likeCount', -1, { id: post.authorId });
       }
     }
     return;
@@ -116,14 +116,14 @@ class LikesService {
     if (!targetLike || !user) return false;
 
     const where = {
-      user_id: userId,
-      like_able_type: type,
-      like_able_id: likeAbleId,
+      userId,
+      likeAbleType: type,
+      likeAbleId,
     };
 
     const exits = await Like.findOne({
       where: where,
-      attributes: ["id", "user_id", "like_able_id", "like_able_type"],
+      attributes: ['id', 'userId', 'likeAbleId', 'likeAbleType'],
     });
     return !!exits;
   }

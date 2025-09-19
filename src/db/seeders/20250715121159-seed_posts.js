@@ -1,121 +1,101 @@
-"use strict";
+'use strict';
 
-const { faker } = require("@faker-js/faker");
+const { faker } = require('@faker-js/faker');
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
-  async up(queryInterface, Sequelize) {
-    /* 1. Lấy danh sách users (tối đa 1 000 bản ghi) */
+  up: async (queryInterface, Sequelize) => {
+    // Lấy users để random author
     const users = await queryInterface.sequelize.query(
-      `SELECT id, full_name, username, avatar_url FROM users LIMIT 1000`,
+      'SELECT id, username, name, avatar FROM users',
+      { type: Sequelize.QueryTypes.SELECT }
+    );
+    if (!users.length) {
+      throw new Error('Không có user nào để gán author cho post');
+    }
+
+    // Lấy tiktok_musics (id, tiktok_id)
+    const tiktokMusics = await queryInterface.sequelize.query(
+      `SELECT id, tiktok_id FROM tiktok_musics`,
       { type: Sequelize.QueryTypes.SELECT }
     );
 
-    if (!users.length) {
-      throw new Error("Không có user để gán author_id cho posts.");
+    // Lấy musics
+    const musics = await queryInterface.sequelize.query(
+      `SELECT id, slug FROM musics`,
+      { type: Sequelize.QueryTypes.SELECT }
+    );
+
+    // Tạo map: tiktok_musics.id -> musics.id
+    const musicMap = new Map();
+    for (const tm of tiktokMusics) {
+      const slug = `tiktok-music-${tm.tiktok_id}`;
+      const music = musics.find((m) => m.slug === slug);
+      if (music) {
+        musicMap.set(tm.id, music.id);
+      }
     }
 
-    /* 2. Hàm sinh nội dung HTML động */
-    const generateContent = () => {
-      let html = "";
+    // Lấy tiktok_videos
+    const videos = await queryInterface.sequelize.query(
+      `SELECT id, tiktok_id, music_id, title, description, content, thumbnail 
+       FROM tiktok_videos`,
+      { type: Sequelize.QueryTypes.SELECT }
+    );
+    if (!videos.length) {
+      throw new Error('Không có dữ liệu tiktok_videos để tạo posts');
+    }
 
-      html += `<h1>${faker.lorem.words({ min: 5, max: 10 })}</h1>`;
-      html += `<p>${faker.lorem.paragraph()}</p>`;
-
-      html += `<h2>${faker.lorem.words({ min: 3, max: 6 })}</h2>`;
-      html += `<p>${faker.lorem.paragraphs(2, "<br/><br/>")}</p>`;
-
-      html += `<h3>${faker.lorem.words({ min: 2, max: 4 })}</h3>`;
-      html += `<img src="${faker.image.url({
-        width: 1200,
-        height: 600,
-        category: "nature",
-        randomize: true,
-      })}" alt="${faker.lorem.word()}" />`;
-      html += "<ul>";
-      Array.from({ length: faker.number.int({ min: 3, max: 6 }) }).forEach(
-        () => {
-          html += `<li><strong>${faker.lorem.word()}:</strong> ${faker.lorem.sentence()}</li>`;
-        }
-      );
-      html += "</ul>";
-
-      html += `<pre><code>${faker.lorem.paragraphs(3, "\n")}</code></pre>`;
-
-      html += `<blockquote><p>${faker.lorem.paragraph()}</p></blockquote>`;
-
-      return html;
-    };
-
-    /* 3. Tạo dữ liệu posts */
-    const posts = [];
-
-    for (let i = 0; i < 300; i++) {
+    const posts = videos.map((video) => {
       const author = faker.helpers.arrayElement(users);
 
-      posts.push({
-        title: faker.lorem.sentence({ min: 6, max: 12 }),
-        slug: faker.helpers.slugify(faker.lorem.slug()),
-        content: generateContent(),
-        description: faker.lorem.sentences(2),
-        excerpt: faker.lorem.sentences(2),
+      // Map music_id từ tiktok_videos -> musics.id
+      const mappedMusicId = video.music_id
+        ? musicMap.get(video.music_id) || null
+        : null;
+
+      return {
+        title: video.title || `TikTok Video ${video.tiktok_id}`,
+        slug: `${video.tiktok_id}`,
+        thumbnail: video.thumbnail,
+        content: video.content,
+        type: 'video',
+        description: video.description || faker.lorem.sentences(2),
+        music_id: mappedMusicId,
         author_id: author.id,
-        author_name: author.full_name,
-        author_avatar: author.avatar_url,
+        author_name: author.name,
         author_username: author.username,
-        meta_title: faker.lorem.words({ min: 3, max: 6 }),
-        meta_description: faker.lorem.sentence(),
-        status: faker.helpers.arrayElement(["published", "draft", "pending"]),
-        view_count: faker.number.int({ min: 0, max: 5000 }),
+        author_avatar: author.avatar,
+        meta_title: '',
+        meta_description: '',
+        status: 'draft',
+        view_count: 0,
         like_count: 0,
         comment_count: 0,
+        book_mark_count: 0,
+        share_count: 0,
         report_count: 0,
-        language: faker.helpers.arrayElement(["en", "vi"]),
-        visibility: faker.helpers.arrayElement(["public", "private"]),
-        moderation_status: faker.helpers.arrayElement([
-          "approved",
-          "pending",
-          "rejected",
-        ]),
-        cover_url: faker.image.url({
-          width: 1200,
-          height: 600,
-          category: "nature",
-          randomize: true,
-        }),
-        thumbnail_url: faker.image.url({
-          width: 400,
-          height: 300,
-          category: "abstract",
-          randomize: true,
-        }),
-        reading_time: faker.number.int({ min: 2, max: 15 }),
-        is_pinned: faker.datatype.boolean() ? 1 : 0,
-        is_featured: faker.datatype.boolean() ? 1 : 0,
-        has_media: faker.datatype.boolean() ? 1 : 0,
-        visibility_updated_at: new Date(),
-        published_at: new Date(),
+        language: 'vi',
+        visibility: 'public',
+        moderation_status: 'approved',
+        is_pinned: 0,
+        is_featured: 0,
+        visibility_updated_at: null,
+        published_at: faker.date.recent(30),
         created_at: new Date(),
         updated_at: new Date(),
-      });
-    }
+        deleted_at: null,
+      };
+    });
 
-    await queryInterface.bulkInsert("posts", posts);
-
-    // 4. Cập nhật post_count cho bảng users
-    await queryInterface.sequelize.query(`
-      UPDATE users u
-      SET post_count = (
-        SELECT COUNT(*)
-        FROM posts p
-        WHERE p.author_id = u.id
-      )
-    `);
+    await queryInterface.bulkInsert('posts', posts, {});
   },
 
-  async down(queryInterface) {
-    await queryInterface.bulkDelete("posts", null, {});
-    // Reset post_count về 0 nếu cần
-    await queryInterface.sequelize.query(`UPDATE users SET post_count = 0`);
+  down: async (queryInterface, Sequelize) => {
+    await queryInterface.bulkDelete('posts', {
+      slug: {
+        [Sequelize.Op.like]: '%',
+      },
+    });
   },
 };

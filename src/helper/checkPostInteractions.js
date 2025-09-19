@@ -1,6 +1,6 @@
-require("module-alias/register");
-const { Op } = require("sequelize");
-const { Like, BookMark } = require("@/models");
+require('module-alias/register');
+const { Op } = require('sequelize');
+const { Like, BookMark } = require('@/models');
 
 /**
  * Kiểm tra like & bookmark của user đối với list bài viết
@@ -10,30 +10,38 @@ const { Like, BookMark } = require("@/models");
  */
 async function checkPostInteractions(postIds, userId) {
   if (!postIds.length || !userId) {
-    return new Map();
+    const res = new Map();
+    postIds.forEach((id) => {
+      res.set(id, {
+        isLiked: false,
+        isBookMarked: false,
+      });
+    });
+    return res;
   }
 
   const likes = await Like.findAll({
     where: {
-      user_id: userId,
-      like_able_type: "post",
-      like_able_id: { [Op.in]: postIds },
+      userId,
+      likeAbleType: 'post',
+      likeAbleId: { [Op.in]: postIds },
     },
-    attributes: ["like_able_id"],
+    attributes: ['likeAbleId'],
     raw: true,
   });
-  const likedPostIds = new Set(likes.map((l) => l.likeable_id));
+
+  const likedPostIds = new Set(likes.map((l) => l.likeAbleId));
 
   const bookmarks = await BookMark.findAll({
     where: {
-      user_id: userId,
-      book_mark_able_type: "post",
-      book_mark_able_id: { [Op.in]: postIds },
+      userId,
+      bookMarkAbleType: 'post',
+      bookMarkAbleId: { [Op.in]: postIds },
     },
-    attributes: ["book_mark_able_id"],
+    attributes: ['book_mark_able_id'],
     raw: true,
   });
-  const bookmarkedPostIds = new Set(bookmarks.map((b) => b.book_mark_able_id));
+  const bookmarkedPostIds = new Set(bookmarks.map((b) => b.bookMarkAbleId));
 
   const result = new Map();
   postIds.forEach((id) => {

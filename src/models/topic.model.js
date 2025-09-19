@@ -1,6 +1,6 @@
 module.exports = (sequelize, DataTypes) => {
   const Topic = sequelize.define(
-    "Topic",
+    'Topic',
     {
       name: {
         type: DataTypes.STRING(100),
@@ -12,44 +12,35 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
         unique: true,
       },
-      description: {
-        type: DataTypes.TEXT,
-        allowNull: true,
-      },
-      icon_url: {
-        type: DataTypes.STRING(255),
-        allowNull: true,
-      },
-      post_count: {
+      postCount: {
         type: DataTypes.INTEGER.UNSIGNED,
         allowNull: false,
         defaultValue: 0,
-      },
-      deleted_at: {
-        type: DataTypes.DATE(6),
-        allowNull: true,
+        field: 'post_count',
       },
     },
     {
-      tableName: "topics",
+      tableName: 'topics',
       timestamps: true,
+      paranoid: true,
       underscored: true,
-      charset: "utf8",
-      collate: "utf8_general_ci",
-      engine: "InnoDB",
-      createdAt: "created_at",
-      updatedAt: "updated_at",
+      charset: 'utf8',
+      collate: 'utf8_general_ci',
+      engine: 'InnoDB',
+      createdAt: 'createdAt',
+      updatedAt: 'updatedAt',
+      deletedAt: 'deletedAt',
     }
   );
   Topic.associate = (db) => {
     Topic.hasMany(db.PostTopic, {
-      foreignKey: "topic_id",
-      as: "postTopics",
+      foreignKey: 'topicId',
+      as: 'postTopics',
     });
     Topic.belongsToMany(db.Post, {
       through: db.PostTopic,
-      foreignKey: "topic_id",
-      as: "posts",
+      foreignKey: 'topicId',
+      as: 'posts',
     });
   };
   return Topic;

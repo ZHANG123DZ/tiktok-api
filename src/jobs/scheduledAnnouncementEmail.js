@@ -8,7 +8,7 @@ async function scheduledAnnouncementEmail(job) {
   const template = await loadEmail('auth/scheduledAnnouncementEmail', { data });
 
   const info = await transporter.sendMail({
-    from: 'TikTok <khanh123tran999@gmail.com>',
+    from: 'TikTok <tue08610@gmail.com>',
     subject: 'Thông báo cập nhật mật khẩu khẩn cấp',
     to: email,
     html: template,

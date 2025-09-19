@@ -1,47 +1,49 @@
 module.exports = (sequelize, DataTypes) => {
   const PostTopic = sequelize.define(
-    "PostTopic",
+    'PostTopic',
     {
-      post_id: {
+      postId: {
         type: DataTypes.BIGINT.UNSIGNED,
         allowNull: false,
         references: {
-          model: "posts",
-          key: "id",
+          model: 'posts',
+          key: 'id',
         },
-        onDelete: "CASCADE",
-        onUpdate: "CASCADE",
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+        field: 'post_id',
       },
-      topic_id: {
+      topicId: {
         type: DataTypes.BIGINT.UNSIGNED,
         allowNull: false,
         references: {
-          model: "topics",
-          key: "id",
+          model: 'topics',
+          key: 'id',
         },
-        onDelete: "CASCADE",
-        onUpdate: "CASCADE",
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+        field: 'topic_id',
       },
     },
     {
-      tableName: "post_topics",
+      tableName: 'post_topics',
       timestamps: true,
       underscored: true,
-      charset: "utf8",
-      collate: "utf8_general_ci",
-      engine: "InnoDB",
-      createdAt: "created_at",
-      updatedAt: "updated_at",
+      charset: 'utf8',
+      collate: 'utf8_general_ci',
+      engine: 'InnoDB',
+      createdAt: 'createdAt',
+      updatedAt: 'updatedAt',
     }
   );
   PostTopic.associate = (db) => {
     PostTopic.belongsTo(db.Post, {
-      foreignKey: "post_id",
-      as: "post",
+      foreignKey: 'post_id',
+      as: 'post',
     });
     PostTopic.belongsTo(db.Topic, {
-      foreignKey: "topic_id",
-      as: "topic",
+      foreignKey: 'topic_id',
+      as: 'topic',
     });
   };
   return PostTopic;

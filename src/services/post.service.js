@@ -1,5 +1,6 @@
-const checkPostInteractions = require("@/helper/checkPostInteractions");
-const incrementField = require("@/helper/incrementField");
+const checkFollowManyUsers = require('@/helper/checkFollowManyUsers');
+const checkPostInteractions = require('@/helper/checkPostInteractions');
+const incrementField = require('@/helper/incrementField');
 const {
   Post,
   Topic,
@@ -7,36 +8,94 @@ const {
   PostTopic,
   Tag,
   User,
+  Music,
   Sequelize,
-} = require("@/models/index");
-const { nanoid } = require("nanoid");
-const { where, Op } = require("sequelize");
-const { default: slugify } = require("slugify");
+} = require('@/models/index');
+const { nanoid } = require('nanoid');
+const { where, Op } = require('sequelize');
+const { default: slugify } = require('slugify');
 
 class PostsService {
   async getAll(page, limit, userId) {
     const offset = (page - 1) * limit;
 
     const { rows: posts, count: total } = await Post.findAndCountAll({
-      include: [Topic, Comment],
+      include: [
+        {
+          model: Tag,
+          as: 'tags',
+          attributes: ['id', 'name', 'slug'],
+          through: { attributes: [] },
+        },
+        {
+          model: Music,
+          as: 'music',
+          attributes: ['id', 'audio', 'title', 'slug', 'thumbnail'],
+          include: [{ model: User, as: 'author', attributes: ['name'] }],
+        },
+      ],
       limit,
       offset,
-      order: [["created_at", "DESC"]],
+      order: [['createdAt', 'DESC']],
     });
+
     const postIds = posts.map((p) => p.id);
+    const authorIds = posts.map((p) => p.authorId);
 
     const interactions = await checkPostInteractions(postIds, userId);
 
+    const follows = await checkFollowManyUsers(userId, authorIds);
+
     const items = posts.map((post) => {
       const plain = post.get({ plain: true });
+
+      plain.author = {
+        id: plain.authorId,
+        username: plain.authorUserName,
+        name: plain.authorName,
+        avatar: plain.authorAvatar,
+        isFollow: follows.get(plain.authorId) || false,
+      };
+
+      plain.tags = plain.tags.map((tag) => tag.name);
+
+      delete plain.authorId;
+      delete plain.authorUserName;
+      delete plain.authorName;
+      delete plain.authorAvatar;
+
       const { isLiked, isBookMarked } = interactions.get(post.id) || {};
       plain.isLiked = isLiked || false;
       plain.isBookMarked = isBookMarked || false;
+
       return plain;
     });
+
     return { items, total };
   }
-
+  async getTrendingPosts(limit = 10) {
+    return await Post.findAll({
+      attributes: {
+        include: [
+          [
+            Sequelize.literal(`
+            (
+              (likeCount * 1 +
+               commentCount * 2 +
+               shareCount * 3 +
+               bookMarkCount * 2 +
+               viewCount * 0.2)
+              / POWER(DATEDIFF(NOW(), createdAt) + 1, 1.2)
+            )
+          `),
+            'popularityScore',
+          ],
+        ],
+      },
+      order: [[Sequelize.literal('popularityScore'), 'DESC']],
+      limit,
+    });
+  }
   async featured(page, limit, userId) {
     const offset = (page - 1) * limit;
 
@@ -44,12 +103,12 @@ class PostsService {
       include: [
         {
           model: Topic,
-          as: "topics",
+          as: 'topics',
         },
       ],
       limit,
       offset,
-      order: [["like_count", "DESC"]],
+      order: [['likeCount', 'DESC']],
     });
     const postIds = posts.map((p) => p.id);
 
@@ -72,7 +131,7 @@ class PostsService {
       include: [
         {
           model: Topic,
-          as: "topics",
+          as: 'topics',
           where: {
             name: {
               [Op.in]: prevTopics,
@@ -83,7 +142,7 @@ class PostsService {
       ],
       limit,
       offset,
-      order: [["created_at", "DESC"]],
+      order: [['createdAt', 'DESC']],
       distinct: true,
     });
     const postIds = posts.map((p) => p.id);
@@ -108,12 +167,12 @@ class PostsService {
       include: [
         {
           model: Topic,
-          as: "topics",
+          as: 'topics',
         },
       ],
       limit,
       offset,
-      order: [["created_at", "DESC"]],
+      order: [['createdAt', 'DESC']],
     });
     const postIds = posts.map((p) => p.id);
 
@@ -129,51 +188,72 @@ class PostsService {
     return { items, total };
   }
 
-  async getByKey(key) {
+  async getByKey(key, userId) {
     const isId = /^\d+$/.test(key);
+
     const post = await Post.findOne({
       where: isId ? { id: key } : { slug: key },
       include: [
         {
           model: User,
-          as: "author",
+          as: 'author',
           attributes: [
-            "id",
-            "avatar_url",
-            "bio",
-            "title",
-            "full_name",
-            "username",
-            "social",
-            "post_count",
-            "follower_count",
-            "following_count",
+            'id',
+            'avatar',
+            'bio',
+            'name',
+            'username',
+            'postCount',
+            'followerCount',
+            'followingCount',
           ],
         },
         {
-          model: Topic,
-          as: "topics",
-        },
-        {
           model: Tag,
-          as: "tags",
-          attributes: ["name"],
+          as: 'tags',
+          attributes: ['name'],
+          through: { attributes: [] },
         },
         {
-          model: Comment,
-          as: "comments",
+          model: Music,
+          as: 'music',
+          attributes: ['id'],
           include: [
             {
               model: User,
-              as: "author",
-              attributes: ["avatar_url", "full_name"],
+              as: 'author',
+              attributes: ['name'],
             },
           ],
         },
       ],
     });
 
-    return post;
+    if (!post) return null;
+
+    const interactions = await checkPostInteractions([post.id], userId);
+    const { isLiked, isBookMarked } = interactions.get(post.id) || {};
+
+    let plainPost = post.toJSON();
+
+    plainPost = {
+      ...plainPost,
+      author: {
+        ...post.author.dataValues,
+        id: plainPost.authorId,
+        avatar: plainPost.authorAvatar ?? plainPost.author?.avatar,
+        username: plainPost.authorUserName ?? plainPost.author?.username,
+      },
+      tags: plainPost.tags.map((tag) => tag.name),
+      isLiked,
+      isBookMarked,
+    };
+
+    delete plainPost.authorId;
+    delete plainPost.authorAvatar;
+    delete plainPost.authorUserName;
+
+    return plainPost;
   }
 
   async create(data, user) {
@@ -183,19 +263,19 @@ class PostsService {
     if (!data.slug) {
       data.slug = toSlug(data.title);
     }
-    data.author_id = user.id;
-    data.author_name = user.full_name;
-    data.author_username = user.username;
-    data.author_avatar = user.avatar_url;
+    data.authorId = user.id;
+    data.authorName = user.name;
+    data.authorUserName = user.username;
+    data.authorAvatar = user.avatar;
 
     const post = await Post.create(data);
     await Promise.all(
       data.topics.map((id) =>
-        PostTopic.create({ post_id: post.id, topic_id: id })
+        PostTopic.create({ postId: post.id, topicId: id })
       )
     );
-    await incrementField(User, "post_count", +1, { id: user.id });
-    await incrementField(Topic, "post_count", +1, {
+    await incrementField(User, 'postCount', +1, { id: user.id });
+    await incrementField(Topic, 'postCount', +1, {
       id: { [Op.in]: data.topics },
     });
     return post;
@@ -223,28 +303,28 @@ class PostsService {
       include: [
         {
           model: Topic,
-          as: "topics",
+          as: 'topics',
           through: { attributes: [] },
         },
       ],
     });
 
-    if (!post) throw new Error("Post not found");
+    if (!post) throw new Error('Post not found');
 
     const topicIds = post.topics?.map((t) => t.id) || [];
 
-    await PostTopic.destroy({ where: { post_id: post.id } });
+    await PostTopic.destroy({ where: { postId: post.id } });
 
     await Post.destroy({ where: { id: post.id } });
 
-    await incrementField(User, "post_count", -1, { id: user.id });
+    await incrementField(User, 'postCount', -1, { id: user.id });
     if (topicIds.length > 0) {
-      await incrementField(Topic, "post_count", -1, {
+      await incrementField(Topic, 'postCount', -1, {
         id: { [Op.in]: topicIds },
       });
     }
 
-    return { message: "Post deleted successfully" };
+    return { message: 'Post deleted successfully' };
   }
 }
 

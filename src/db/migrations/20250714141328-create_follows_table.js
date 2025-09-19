@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
@@ -10,7 +10,7 @@ module.exports = {
      * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
      */
     await queryInterface.createTable(
-      "follows",
+      'follows',
       {
         id: {
           type: Sequelize.BIGINT.UNSIGNED,
@@ -31,24 +31,24 @@ module.exports = {
         },
         updated_at: {
           type: Sequelize.DATE(6),
-          onUpdate: Sequelize.literal("CURRENT_TIMESTAMP(6)"),
+          onUpdate: Sequelize.literal('CURRENT_TIMESTAMP(6)'),
         },
       },
       {
         timestamps: true,
         underscored: true,
-        charset: "utf8",
-        collate: "utf8_general_ci",
-        engine: "InnoDB",
+        charset: 'utf8',
+        collate: 'utf8_general_ci',
+        engine: 'InnoDB',
       }
     );
 
     await queryInterface.addIndex(
-      "follows",
-      ["user_id", "follow_able_id", "follow_able_type"],
+      'follows',
+      ['user_id', 'follow_able_id', 'follow_able_type'],
       {
         unique: true,
-        name: "unique_follow_user_target",
+        name: 'unique_follow_user_target',
       }
     );
   },
@@ -60,6 +60,6 @@ module.exports = {
      * Example:
      * await queryInterface.dropTable('users');
      */
-    await queryInterface.dropTable("follows");
+    await queryInterface.dropTable('follows');
   },
 };

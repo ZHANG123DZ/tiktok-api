@@ -1,22 +1,23 @@
-const usersService = require("@/services/user.service");
+const userService = require('@/services/user.service');
 
-const response = require("@/utils/response");
-const throwError = require("@/utils/throwError");
+const response = require('@/utils/response');
+const throwError = require('@/utils/throwError');
 
 const index = async (req, res) => {
   const { page, limit } = req;
-  const { items, total } = await usersService.getAll(page, limit);
+  const { items, total } = await userService.getAll(page, limit);
   res.paginate({ items, total });
 };
 
 const show = async (req, res) => {
   const username = req.params.key;
+  const userId = req.user?.id;
   try {
-    const user = await usersService.getByKey(username);
+    const user = await userService.getByKey(username, userId);
     response.success(res, 200, user);
   } catch (error) {
     console.log(error);
-    response.error(res, 404, "Không tìm thấy người dùng này");
+    response.error(res, 404, 'Không tìm thấy người dùng này');
   }
 };
 
@@ -25,7 +26,7 @@ const getUserPosts = async (req, res) => {
   const { page, limit } = req;
   const userId = req.user?.id;
 
-  const { items, total } = await usersService.getUserPosts(
+  const { items, total } = await userService.getUserPosts(
     username,
     page,
     limit,
@@ -35,22 +36,22 @@ const getUserPosts = async (req, res) => {
 };
 
 const store = async (req, res) => {
-  const user = await usersService.create(req.body);
+  const user = await userService.create(req.body);
   response.success(res, 201, user);
 };
 
 const update = async (req, res) => {
-  const user = await usersService.update(req.params.key, req.body);
+  const user = await userService.update(req.params.key, req.body);
 
-  if (!user) throwError(404, "Not Found.");
+  if (!user) throwError(404, 'Not Found.');
 
   response.success(res, 201, user);
 };
 
 const destroy = async (req, res) => {
-  const result = await usersService.remove(req.params.key);
+  const result = await userService.remove(req.params.key);
 
-  if (!result) throwError(404, "Not Found.");
+  if (!result) throwError(404, 'Not Found.');
 
   response.success(res, 204);
 };

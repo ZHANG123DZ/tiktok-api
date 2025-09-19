@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
@@ -30,7 +30,7 @@ module.exports = {
         likes.push({
           user_id: user.id,
           like_able_id: post.id,
-          like_able_type: "post",
+          like_able_type: 'post',
           created_at: new Date(),
           updated_at: new Date(),
         });
@@ -45,7 +45,7 @@ module.exports = {
         likes.push({
           user_id: user.id,
           like_able_id: comment.id,
-          like_able_type: "comment",
+          like_able_type: 'comment',
           created_at: new Date(),
           updated_at: new Date(),
         });
@@ -53,7 +53,7 @@ module.exports = {
     }
 
     // Insert all likes
-    await queryInterface.bulkInsert("likes", likes);
+    await queryInterface.bulkInsert('likes', likes);
 
     // Cập nhật like_count cho Post
     await queryInterface.sequelize.query(`
@@ -73,7 +73,7 @@ module.exports = {
   },
 
   async down(queryInterface, Sequelize) {
-    await queryInterface.bulkDelete("likes", null, {});
+    await queryInterface.bulkDelete('likes', null, {});
 
     // Reset like_count về 0 khi rollback
     await queryInterface.sequelize.query(`UPDATE posts SET like_count = 0`);

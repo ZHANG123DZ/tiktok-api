@@ -1,4 +1,4 @@
-const faker = require("@faker-js/faker");
+const faker = require('@faker-js/faker');
 
 const {
   Conversation,
@@ -6,8 +6,8 @@ const {
   User,
   Message,
   MessageRead,
-} = require("@/models");
-const { Sequelize } = require("@/models");
+} = require('@/models');
+const { Sequelize } = require('@/models');
 const { Op } = Sequelize;
 
 class ConversationService {
@@ -15,22 +15,22 @@ class ConversationService {
   async create(userId, participantsId, conversationData = {}) {
     participantsId.push(userId);
     if (participantsId.length > 2) {
-      conversationData.avatar_url = faker.image.avatar();
+      conversationData.avatar = faker.image.avatar();
     }
     const users = await User.findAll({
       where: { id: participantsId },
     });
-    if (users.length < 2) throw new Error("User(s) not found");
+    if (users.length < 2) throw new Error('User(s) not found');
     if (users.length === 2) {
       conversationData.name = null;
     } else {
       if (!conversationData.name) {
-        conversationData.name = `${users[0].full_name} và ${
+        conversationData.name = `${users[0].name} và ${
           users.length - 1
         } người khác`;
       }
-      if (!conversationData.avatar_url) {
-        conversationData.avatar_url = faker.image.avatar();
+      if (!conversationData.avatar) {
+        conversationData.avatar = faker.image.avatar();
       }
     }
     const conversation = await Conversation.create(conversationData);
@@ -50,111 +50,133 @@ class ConversationService {
       include: [
         {
           model: UserConversation,
-          as: "participants",
+          as: 'participants',
           where: { user_id: userId },
           attributes: [],
         },
         {
           model: User,
-          as: "users",
-          attributes: ["id", "full_name", "avatar_url", "username"],
+          as: 'users',
+          attributes: ['id', 'name', 'avatar', 'username', 'role'],
           through: { attributes: [] },
         },
         {
           model: Message,
-          as: "messages",
+          as: 'messages',
           separate: true,
           limit: 1,
-          order: [["created_at", "DESC"]],
+          order: [['created_at', 'DESC']],
         },
         {
           model: MessageRead,
-          as: "list_readers",
+          as: 'list_readers',
+          where: { user_id: userId },
+          required: false,
         },
       ],
-      order: [["updated_at", "DESC"]],
+      order: [['updated_at', 'DESC']],
     });
 
-    return Promise.all(
-      conversations.map(async (conversation) => {
-        const conv = conversation.get({ plain: true });
+    const convIds = conversations.map((c) => c.id);
 
-        if (conv.users.length === 2) {
-          const speaker = conv.users.find((u) => u.id !== userId);
-          conv.name = speaker.full_name;
-          conv.avatar_url = speaker.avatar_url;
-        }
+    // 1. Lấy message_id cuối đã đọc
+    const reads = await MessageRead.findAll({
+      where: { user_id: userId },
+      attributes: ['conversation_id', 'message_id'],
+      raw: true,
+    });
 
-        conv.lastMessage = conv.messages?.[0] ?? null;
-        delete conv.messages;
+    const lastReadMap = new Map(
+      reads.map((r) => [r.conversation_id, r.message_id])
+    );
 
-        const myRead = conv.list_readers?.[0] ?? null;
-        let unreadCount = 0;
+    const { Op } = Sequelize;
 
-        if (!myRead || myRead.message_id === null) {
-          unreadCount = await Message.count({
-            where: { conversation_id: conversation.id },
-          });
-        } else {
-          unreadCount = await Message.count({
-            where: {
-              conversation_id: conversation.id,
-              id: { [Op.gt]: myRead.message_id },
-            },
-          });
-        }
+    // 2. Đếm tin chưa đọc
+    const unreadCountsArr = await Promise.all(
+      convIds.map(async (convId) => {
+        const lastReadId = lastReadMap.get(convId) || 0;
 
-        conv.unreadCount = unreadCount;
-        delete conv.list_readers;
+        const count = await Message.count({
+          where: {
+            conversation_id: convId,
+            user_id: { [Op.ne]: userId },
+            id: { [Op.gt]: lastReadId },
+          },
+        });
 
-        return conv;
+        return { conversation_id: convId, unread_count: count };
       })
     );
+
+    const unreadMap = new Map(
+      unreadCountsArr.map((u) => [u.conversation_id, u.unread_count])
+    );
+
+    // 3. Build kết quả
+    return conversations.map((conv) => {
+      const data = conv.get({ plain: true });
+
+      if (data.users.length === 2) {
+        const speaker = data.users.find((u) => u.id !== userId);
+        data.name = speaker.name;
+        data.avatar = speaker.avatar;
+      }
+
+      data.lastMessage = data.messages?.[0] ?? null;
+      delete data.messages;
+
+      data.unreadCount = unreadMap.get(data.id) || 0;
+
+      delete data.list_readers;
+
+      return data;
+    });
   }
 
   async getById(id, userId) {
     const isParticipant = await UserConversation.findOne({
       where: { conversation_id: id, user_id: userId },
     });
-    if (!isParticipant) throw new Error("Forbidden");
+    if (!isParticipant) throw new Error('Forbidden');
 
     const conversation = await Conversation.findByPk(id, {
       include: [
         {
           model: User,
-          as: "users",
-          attributes: ["id", "full_name", "avatar_url", "username"],
+          as: 'users',
+          attributes: ['id', 'name', 'avatar', 'username'],
           through: { attributes: [] },
         },
         {
           model: Message,
-          as: "messages",
+          as: 'messages',
           include: [
             {
               model: User,
-              as: "sender",
-              attributes: ["id", "username", "full_name", "avatar_url"],
+              as: 'sender',
+              attributes: ['id', 'username', 'name', 'avatar'],
             },
           ],
         },
       ],
-      order: [[{ model: Message, as: "messages" }, "created_at", "DESC"]],
+      order: [[{ model: Message, as: 'messages' }, 'created_at', 'DESC']],
     });
 
-    if (!conversation) throw new Error("Conversation not found");
+    if (!conversation) throw new Error('Conversation not found');
 
     const plainConversation = conversation.toJSON();
 
     if (plainConversation.users.length === 2) {
-      plainConversation.avatar_url =
-        plainConversation.users.find((user) => user.id !== userId)
-          ?.avatar_url || null;
+      plainConversation.avatar =
+        plainConversation.users.find((user) => user.id !== userId)?.avatar ||
+        null;
     }
 
     plainConversation.messages = (plainConversation.messages || []).map(
       (mes) => ({
         ...mes,
-        author: mes.user_id === userId ? "me" : "other",
+        author: mes.user_id === userId ? 'me' : 'other',
       })
     );
 
@@ -165,7 +187,7 @@ class ConversationService {
     const isParticipant = await UserConversation.findOne({
       where: { conversation_id: id, user_id: userId },
     });
-    if (!isParticipant) throw new Error("Forbidden");
+    if (!isParticipant) throw new Error('Forbidden');
 
     await Conversation.update(data, { where: { id } });
     return await this.getById(id, userId);
@@ -175,7 +197,7 @@ class ConversationService {
     const isParticipant = await UserConversation.findOne({
       where: { conversation_id: id, user_id: userId },
     });
-    if (!isParticipant) throw new Error("Forbidden");
+    if (!isParticipant) throw new Error('Forbidden');
 
     await Conversation.update({ deleted_at: new Date() }, { where: { id } });
     return true;
@@ -186,11 +208,11 @@ class ConversationService {
       include: [
         {
           model: UserConversation,
-          as: "participants",
+          as: 'participants',
           where: {
             user_id: { [Op.in]: [userId, targetUserId] },
           },
-          attributes: ["user_id"],
+          attributes: ['user_id'],
         },
       ],
     });
@@ -225,7 +247,6 @@ class ConversationService {
         });
       }
     }
-    return;
   }
 }
 

@@ -1,6 +1,6 @@
 module.exports = (sequelize, DataTypes) => {
   const User = sequelize.define(
-    "User",
+    'User',
     {
       username: {
         type: DataTypes.STRING(100),
@@ -18,64 +18,63 @@ module.exports = (sequelize, DataTypes) => {
         unique: true,
       },
       password: {
+        allowNull: false,
         type: DataTypes.STRING(255),
-        allowNull: true,
-        defaultValue: null,
       },
-      full_name: {
+      name: {
+        allowNull: true,
         type: DataTypes.STRING(191),
-        allowNull: true,
       },
-      first_name: {
+      firstName: {
+        allowNull: true,
         type: DataTypes.STRING(100),
-        allowNull: true,
+        field: 'first_name',
       },
-      last_name: {
+      lastName: {
+        allowNull: true,
         type: DataTypes.STRING(100),
-        allowNull: true,
+        field: 'last_name',
       },
-      avatar_url: {
+      avatar: {
+        allowNull: true,
         type: DataTypes.STRING(191),
-        allowNull: true,
-      },
-      cover_url: {
-        type: DataTypes.STRING(255),
-        allowNull: true,
-      },
-      title: {
-        type: DataTypes.STRING(255),
-        allowNull: true,
       },
       bio: {
+        allowNull: true,
         type: DataTypes.TEXT,
-        allowNull: true,
       },
-      social: {
-        type: DataTypes.TEXT,
-        allowNull: true,
-      },
-      post_count: {
-        type: DataTypes.BIGINT,
+      postCount: {
         defaultValue: 0,
         allowNull: true,
+        type: DataTypes.BIGINT.UNSIGNED,
+        // field: 'post_count',
       },
-      follower_count: {
-        type: DataTypes.BIGINT,
+      followerCount: {
         defaultValue: 0,
         allowNull: true,
+        type: DataTypes.BIGINT.UNSIGNED,
+        field: 'follower_count',
       },
-      following_count: {
-        type: DataTypes.BIGINT,
+      followingCount: {
         defaultValue: 0,
         allowNull: true,
+        type: DataTypes.BIGINT.UNSIGNED,
+        field: 'following_count',
       },
-      like_count: {
-        type: DataTypes.BIGINT,
+      likeCount: {
         defaultValue: 0,
         allowNull: true,
+        type: DataTypes.BIGINT.UNSIGNED,
+        field: 'like_count',
+      },
+      reportCount: {
+        defaultValue: 0,
+        allowNull: true,
+        type: DataTypes.BIGINT.UNSIGNED,
+        field: 'report_count',
       },
       gender: {
-        type: DataTypes.ENUM("male", "female", "other"),
+        type: DataTypes.ENUM('male', 'female', 'other'),
         allowNull: true,
       },
       birthday: {
@@ -83,127 +82,134 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: true,
       },
       role: {
-        type: DataTypes.ENUM("user", "admin"),
+        type: DataTypes.STRING(100),
         allowNull: true,
       },
       status: {
-        type: DataTypes.ENUM("active", "inactive", "banned"),
-        allowNull: true,
-        defaultValue: "active",
-      },
-      location: {
-        type: DataTypes.STRING(100),
+        defaultValue: 'active',
+        type: DataTypes.ENUM('active', 'inactive', 'banned'),
         allowNull: true,
       },
-      website: {
-        type: DataTypes.STRING(255),
-        allowNull: true,
-      },
-      two_factor_enabled: {
+      twoFactorEnabled: {
         type: DataTypes.BOOLEAN,
-        defaultValue: 0,
+        allowNull: true,
+        field: 'two_factor_enabled',
       },
-      login_provider: {
+      loginProvider: {
         type: DataTypes.STRING(100),
         allowNull: true,
+        field: 'login_provider',
       },
-      last_login_at: {
+      lastLoginAt: {
         type: DataTypes.DATE(6),
         allowNull: true,
+        field: 'last_login_at',
       },
-      email_sent_at: {
+      emailSentAt: {
         type: DataTypes.DATE(6),
         allowNull: true,
+        field: 'email_sent_at',
       },
-      verified_at: {
+      verifiedAt: {
         type: DataTypes.DATE(6),
         allowNull: true,
-      },
-      deleted_at: {
-        type: DataTypes.DATE(6),
-        allowNull: true,
+        field: 'verified_at',
       },
     },
     {
-      tableName: "users",
+      tableName: 'users',
       underscored: true,
-      charset: "utf8",
-      collate: "utf8_general_ci",
-      engine: "InnoDB",
-      timestamps: false,
+      paranoid: true,
+      charset: 'utf8',
+      collate: 'utf8mb4_unicode_ci',
+      engine: 'InnoDB',
+      timestamps: true,
+      createdAt: 'createdAt',
+      updatedAt: 'updatedAt',
+      deletedAt: 'deletedAt',
     }
   );
   User.associate = (db) => {
     User.hasOne(db.UserSetting, {
-      foreignKey: "user_id",
-      as: "setting",
+      foreignKey: 'userId',
+      as: 'setting',
     });
-    User.hasMany(db.Email, {
-      foreignKey: "user_id",
-      as: "emails",
+    User.hasOne(db.Email, {
+      foreignKey: 'userId',
+      as: 'emailVerification',
     });
     User.hasMany(db.Comment, {
-      foreignKey: "user_id",
-      as: "comments",
+      foreignKey: 'userId',
+      as: 'comments',
     });
     User.hasMany(db.Follow, {
-      foreignKey: "user_id",
-      as: "follows",
+      foreignKey: 'userId',
+      as: 'follows',
     });
     User.hasMany(db.Like, {
-      foreignKey: "user_id",
-      as: "likes",
+      foreignKey: 'userId',
+      as: 'likes',
     });
     User.hasMany(db.BookMark, {
-      foreignKey: "user_id",
-      as: "bookmarks",
+      foreignKey: 'userId',
+      as: 'bookmarks',
     });
     User.hasMany(db.MessageRead, {
-      foreignKey: "user_id",
-      as: "reads",
+      foreignKey: 'userId',
+      as: 'messageReads',
     });
     User.hasMany(db.Notification, {
-      foreignKey: "user_id",
-      as: "notifications",
+      foreignKey: 'userId',
+      as: 'notifications',
     });
     User.hasMany(db.Post, {
-      foreignKey: "author_id",
-      as: "posts",
+      foreignKey: 'authorId',
+      as: 'posts',
     });
     User.hasMany(db.Message, {
-      foreignKey: "user_id",
-      as: "messages",
+      foreignKey: 'userId',
+      as: 'messages',
+    });
+    User.hasMany(db.Music, {
+      foreignKey: 'authorId',
+      as: 'musicTracks',
+    });
+    User.hasMany(db.Search, {
+      foreignKey: 'userId',
+      as: 'searches',
+    });
+    User.hasMany(db.MessageSystem, {
+      foreignKey: 'userId',
+      as: 'systemMessages',
+    });
+    User.hasMany(db.Friend, {
+      foreignKey: 'userId',
+      as: 'friendsSent',
+    });
+    User.hasMany(db.VerificationCode, {
+      foreignKey: 'userId',
+      as: 'verificationCodes',
     });
     User.belongsToMany(db.Conversation, {
       through: db.UserConversation,
-      foreignKey: "user_id",
-      otherKey: "conversation_id",
-      as: "conversations",
+      foreignKey: 'userId',
+      otherKey: 'conversationId',
+      as: 'conversations',
     });
     User.hasMany(db.UserConversation, {
-      foreignKey: "user_id",
-      as: "conversationsMap",
+      foreignKey: 'userId',
+      as: 'conversationMappings',
     });
-    User.hasMany(db.UserSkill, {
-      foreignKey: "user_id",
-      as: "skillMappings",
-    });
-    User.hasMany(db.UserBadge, {
-      foreignKey: "user_id",
-      as: "badgeMappings",
-    });
-    User.belongsToMany(db.Skill, {
-      through: db.UserSkill,
-      foreignKey: "user_id",
-      otherKey: "skill_id",
-      as: "skillList",
+    User.belongsToMany(db.Role, {
+      through: db.UserRole,
+      foreignKey: 'userId',
+      otherKey: 'roleId',
+      as: 'roles',
     });
 
-    User.belongsToMany(db.Badge, {
-      through: db.UserBadge,
-      foreignKey: "user_id",
-      otherKey: "badge_id",
-      as: "badgeList",
+    User.hasMany(db.UserRole, {
+      foreignKey: 'userId',
+      as: 'userRoles',
     });
   };
   return User;

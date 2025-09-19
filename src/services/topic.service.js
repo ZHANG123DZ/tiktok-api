@@ -1,5 +1,5 @@
-const { Topic, Post } = require("@/models/index");
-const { where, Op } = require("sequelize");
+const { Topic, Post } = require('@/models/index');
+const { where, Op } = require('sequelize');
 
 class TopicService {
   async getAll(page, limit) {
@@ -8,7 +8,7 @@ class TopicService {
     const { rows: items, count: total } = await Topic.findAndCountAll({
       limit,
       offset,
-      order: [["created_at", "DESC"]],
+      order: [['createdAt', 'DESC']],
     });
 
     return { items, total };
@@ -20,7 +20,7 @@ class TopicService {
       include: [
         {
           model: Post,
-          as: "posts",
+          as: 'posts',
         },
       ],
     });

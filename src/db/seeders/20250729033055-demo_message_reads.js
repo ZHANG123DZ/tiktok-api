@@ -1,59 +1,60 @@
-"use strict";
-require("module-alias/register");
+'use strict';
 
-const { User, Conversation, Message, UserConversation } = require("@/models");
+const { faker } = require('@faker-js/faker');
 
+/** @type {import('sequelize-cli').Migration} */
 module.exports = {
-  up: async (queryInterface, Sequelize) => {
-    const messageReads = [];
-
-    const conversations = await Conversation.findAll({
-      include: [
-        {
-          model: Message,
-          as: "messages",
-          order: [["created_at", "ASC"]],
-        },
-        {
-          model: UserConversation,
-          as: "participants",
-          include: [{ model: User, as: "user" }],
-        },
-      ],
+  async up(queryInterface, Sequelize) {
+    // Lấy danh sách user, conversation, message
+    const users = await queryInterface.sequelize.query(`SELECT id FROM users`, {
+      type: Sequelize.QueryTypes.SELECT,
     });
+    const conversations = await queryInterface.sequelize.query(
+      `SELECT id FROM conversations`,
+      { type: Sequelize.QueryTypes.SELECT }
+    );
+    const messages = await queryInterface.sequelize.query(
+      `SELECT id, conversation_id FROM messages`,
+      { type: Sequelize.QueryTypes.SELECT }
+    );
 
-    for (const conversation of conversations) {
-      const messages = conversation.messages;
-      const lastMessage = messages[messages.length - 1] || null;
+    if (!users.length || !conversations.length || !messages.length) {
+      throw new Error(
+        'Cần seed users, conversations, messages trước khi seed message_reads!'
+      );
+    }
 
-      for (const participant of conversation.participants) {
-        const user = participant.user;
-        if (!user) continue;
+    const reads = [];
 
-        const shouldRead = Math.random() > 0.4; // 60% đã đọc
+    for (const msg of messages) {
+      // mỗi message có 0–3 người đọc
+      const readCount = faker.number.int({ min: 0, max: 3 });
+      const seenUsers = new Set();
 
-        const data = {
-          user_id: user.id,
-          conversation_id: conversation.id,
-          message_id: shouldRead && lastMessage ? lastMessage.id : null,
-          read_at:
-            shouldRead && lastMessage
-              ? new Date(lastMessage.created_at.getTime() + 1000)
-              : null,
+      for (let i = 0; i < readCount; i++) {
+        const reader = faker.helpers.arrayElement(users);
+
+        // tránh trùng user đọc cùng 1 message
+        if (seenUsers.has(reader.id)) continue;
+        seenUsers.add(reader.id);
+
+        reads.push({
+          user_id: reader.id,
+          conversation_id: msg.conversation_id,
+          message_id: msg.id,
+          read_at: faker.date.recent({ days: 30 }),
           created_at: new Date(),
           updated_at: new Date(),
-        };
-
-        messageReads.push(data);
+        });
       }
     }
 
-    if (messageReads.length > 0) {
-      await queryInterface.bulkInsert("message_reads", messageReads);
+    if (reads.length) {
+      await queryInterface.bulkInsert('message_reads', reads);
     }
   },
 
-  down: async (queryInterface, Sequelize) => {
-    await queryInterface.bulkDelete("message_reads", null, {});
+  async down(queryInterface) {
+    await queryInterface.bulkDelete('message_reads', null, {});
   },
 };

@@ -1,11 +1,11 @@
-require("dotenv").config();
-require("module-alias/register");
+require('dotenv').config();
+require('module-alias/register');
 
-const sendVerifyEmailJob = require("@/jobs/sendVerifyEmailJob");
-const sendCodeJob = require("@/jobs/sendCodeJob");
-const scheduledAnnouncementEmail = require("@/jobs/scheduledAnnouncementEmail");
-const queueService = require("@/services/queue.service");
-const sendForgotPasswordJob = require("@/jobs/sendForgotPasswordJob");
+const sendVerifyEmailJob = require('@/jobs/sendVerifyEmailJob');
+const sendCodeJob = require('@/jobs/sendCodeJob');
+const scheduledAnnouncementEmail = require('@/jobs/scheduledAnnouncementEmail');
+const queueService = require('@/services/queue.service');
+const sendForgotPasswordJob = require('@/jobs/sendForgotPasswordJob');
 
 const handlers = {
   sendVerifyEmailJob,
@@ -19,11 +19,11 @@ async function jobProcess(job) {
 
   if (handler) {
     try {
-      await queueService.update(job.id, { status: "processing" });
+      await queueService.update(job.id, { status: 'processing' });
       await handler(job);
-      await queueService.update(job.id, { status: "completed" });
+      await queueService.update(job.id, { status: 'completed' });
     } catch (error) {
-      await queueService.update(job.id, { status: "reject" });
+      await queueService.update(job.id, { status: 'reject' });
     }
   }
 }
