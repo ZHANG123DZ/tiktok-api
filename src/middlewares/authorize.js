@@ -1,9 +1,5 @@
 const { User, Role, Permission } = require('@/models');
 
-/**
- * Middleware kiểm tra quyền
- * @param {string[]} requiredPermissions - Danh sách quyền cần có
- */
 function authorize(requiredPermissions = []) {
   return async (req, res, next) => {
     try {
