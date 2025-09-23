@@ -18,7 +18,7 @@ const search = async (req, res) => {
 
 const suggestion = async (req, res) => {
   try {
-    const { q } = req.query;
+    const q = req.body.query;
     const userId = req.user?.id;
     if (!q) return res.status(400).json({ message: 'Query is required' });
     // await setup();
