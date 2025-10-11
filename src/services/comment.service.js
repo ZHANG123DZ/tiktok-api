@@ -122,7 +122,7 @@ class CommentsService {
       ],
     });
     comment.dataValues.isLiked = false;
-    await incrementField(Post, 'commentCount', +1, {
+    await incrementField(Post, 'comment_count', +1, {
       id: comment.postId,
     });
     comment.dataValues.author = {
@@ -178,7 +178,7 @@ class CommentsService {
   async remove(id) {
     const comment = await Comment.findByPk(id);
     await Comment.destroy({ where: { id } });
-    await incrementField(Post, 'commentCount', -1, { id: comment.postId });
+    await incrementField(Post, 'comment_count', -1, { id: comment.postId });
     pusher.trigger(
       `post-${comment.postId}-comments`,
       'delete-comment',

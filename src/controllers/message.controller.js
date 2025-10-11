@@ -1,6 +1,6 @@
-const messageService = require("@/services/message.service");
-const response = require("@/utils/response");
-const throwError = require("@/utils/throwError");
+const messageService = require('@/services/message.service');
+const response = require('@/utils/response');
+const throwError = require('@/utils/throwError');
 
 const index = async (req, res) => {
   try {
@@ -15,31 +15,31 @@ const index = async (req, res) => {
 
     return response.success(res, 200, messages);
   } catch (error) {
-    return response.error(res, 500, error.message || "Failed to get messages");
+    return response.error(res, 500, error.message || 'Failed to get messages');
   }
 };
 
 const show = async (req, res) => {
   try {
     const message = await messageService.getById(req.params.id);
-    if (!message) return throwError(404, "Message not found");
+    if (!message) return throwError(404, 'Message not found');
 
     return response.success(res, 200, message);
   } catch (error) {
-    return response.error(res, 500, error.message || "Failed to get message");
+    return response.error(res, 500, error.message || 'Failed to get message');
   }
 };
 
 const store = async (req, res) => {
   const currentUserId = req.user.id;
-  const { conversation_id, content } = req.body;
+  const { conversationId, content } = req.body;
 
-  if (!conversation_id || !content) {
-    throwError(400, "Missing conversation_id or content");
+  if (!conversationId || !content) {
+    throwError(400, 'Missing conversationId or content');
   }
 
   const message = await messageService.create(
-    conversation_id,
+    conversationId,
     currentUserId,
     content
   );
@@ -55,14 +55,14 @@ const update = async (req, res) => {
       req.body
     );
 
-    if (!message) return throwError(404, "Message not found");
+    if (!message) return throwError(404, 'Message not found');
 
     return response.success(res, 200, message);
   } catch (error) {
     return response.error(
       res,
       500,
-      error.message || "Failed to update message"
+      error.message || 'Failed to update message'
     );
   }
 };
@@ -72,14 +72,14 @@ const destroy = async (req, res) => {
     const userId = req.user.id;
     const result = await messageService.remove(req.params.id, userId);
 
-    if (!result) return throwError(404, "Message not found");
+    if (!result) return throwError(404, 'Message not found');
 
     return response.success(res, 204);
   } catch (error) {
     return response.error(
       res,
       500,
-      error.message || "Failed to delete message"
+      error.message || 'Failed to delete message'
     );
   }
 };
@@ -89,7 +89,7 @@ const chatAI = async (req, res) => {
   const { input, botId } = req.body;
 
   if (!conversationId || !input) {
-    throwError(400, "Missing conversation_id or content");
+    throwError(400, 'Missing conversationId or content');
   }
 
   const message = await messageService.chatAI(conversationId, botId, input);

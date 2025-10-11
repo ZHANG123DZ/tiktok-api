@@ -70,7 +70,7 @@ class FollowsService {
       return false;
     }
     await Follow.create(where);
-    await incrementField(Model, 'followerCount', +1, { id: followAbleId });
+    await incrementField(Model, 'follower_count', +1, { id: followAbleId });
     const notify = await Notification.create({
       type: 'follow',
       userId: followAbleId,
@@ -102,7 +102,7 @@ class FollowsService {
     await Follow.destroy({
       where: where,
     });
-    await incrementField(Model, 'followerCount', -1, { id: followAbleId });
+    await incrementField(Model, 'follower_count', -1, { id: followAbleId });
     return;
   }
 

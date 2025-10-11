@@ -1,44 +1,25 @@
-const topicService = require("@/services/topic.service");
-
-const response = require("@/utils/response");
-const throwError = require("@/utils/throwError");
+const topicService = require('@/services/topic.service');
+const response = require('@/utils/response');
+const throwError = require('@/utils/throwError');
 
 const index = async (req, res) => {
-  const { page, limit } = req;
-  const { items, total } = await topicService.getAll(page, limit);
-  res.paginate({ items, total });
+  const topics = await topicService.getAll();
+  if (!topics) throwError(404, 'Not Found.');
+
+  response.success(res, 200, topics);
 };
 
 const show = async (req, res) => {
   const slug = req.params.slug;
-  const topic = await topicService.getById(slug);
+  const userId = req.user?.id;
 
-  if (!topic) throwError(404, "Not Found.");
+  const topic = await topicService.getById(slug, userId);
+  if (!topic) throwError(404, 'Not Found.');
 
   response.success(res, 200, topic);
 };
 
-const store = async (req, res) => {
-  const topic = await topicService.create(req.body);
-  response.success(res, 201, topic);
+module.exports = {
+  show,
+  index,
 };
-
-const update = async (req, res) => {
-  const slug = req.params.slug;
-  const topic = await topicService.update(slug, req.body);
-
-  if (!topic) throwError(404, "Not Found.");
-
-  response.success(res, 201, topic);
-};
-
-const destroy = async (req, res) => {
-  const slug = req.params.slug;
-  const result = await topicService.remove(slug);
-
-  if (!result) throwError(404, "Not Found.");
-
-  response.success(res, 204);
-};
-
-module.exports = { show, index, store, update, destroy };

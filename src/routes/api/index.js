@@ -18,8 +18,12 @@ const musicRouter = require('./music.route');
 const tagRouter = require('./tag.route');
 const searchRouter = require('./search.route');
 const translateRouter = require('./translate.route');
+const broadcastingRouter = require('./broadcasting.route');
 const auth = require('@/middlewares/auth');
 
+router.use('/posts', postRouter);
+router.use('/posts/:slug/comments', commentRouter);
+router.use('/broadcasting', broadcastingRouter);
 router.use('/auth', authRouter);
 router.use('/users', userRouter);
 router.use('/musics', musicRouter);
@@ -35,9 +39,5 @@ router.use('/conversations/:conversation/messages', messagesRouter);
 router.use('/conversations', auth, conversationRouter);
 router.use('/search', searchRouter);
 router.use('/translate', translateRouter);
-
-//Route cho posts và các thành phần con
-router.use('/posts', postRouter);
-router.use('/posts/:slug/comments', commentRouter);
 
 module.exports = router;

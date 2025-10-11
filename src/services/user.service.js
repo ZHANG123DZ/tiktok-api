@@ -105,6 +105,46 @@ class UsersService {
     return { items, limit, total };
   }
 
+  async getIntroUsers(page, limit, userId) {
+    const offset = (page - 1) * limit;
+
+    const { rows: items, count: total } = await User.findAndCountAll({
+      attributes: ['id', 'name', 'username', 'avatar', 'isVerifiedBadge'],
+      include: {
+        model: Post,
+        attributes: ['id', 'thumbnail', 'content'],
+        limit: 1,
+        as: 'posts',
+      },
+      limit,
+      offset,
+      order: [['createdAt', 'DESC']],
+    });
+
+    const usersId = items.map((u) => u.id);
+
+    const followMap = await checkFollowManyUsers(userId, usersId);
+
+    const result = items.map((user) => {
+      const isFollow = followMap.get(user.id) || false;
+
+      return {
+        id: user.id,
+        name: user.name,
+        username: user.username,
+        avatar: user.avatar,
+        isVerifiedBadge: user.isVerifiedBadge,
+        intro: user.posts?.[0] || null,
+        isFollow,
+      };
+    });
+
+    return {
+      total,
+      items: result,
+    };
+  }
+
   async create(data) {
     const user = await User.create(data);
     return user;

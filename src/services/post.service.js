@@ -274,8 +274,8 @@ class PostsService {
         PostTopic.create({ postId: post.id, topicId: id })
       )
     );
-    await incrementField(User, 'postCount', +1, { id: user.id });
-    await incrementField(Topic, 'postCount', +1, {
+    await incrementField(User, 'post_count', +1, { id: user.id });
+    await incrementField(Topic, 'post_count', +1, {
       id: { [Op.in]: data.topics },
     });
     return post;
@@ -317,9 +317,9 @@ class PostsService {
 
     await Post.destroy({ where: { id: post.id } });
 
-    await incrementField(User, 'postCount', -1, { id: user.id });
+    await incrementField(User, 'post_count', -1, { id: user.id });
     if (topicIds.length > 0) {
-      await incrementField(Topic, 'postCount', -1, {
+      await incrementField(Topic, 'post_count', -1, {
         id: { [Op.in]: topicIds },
       });
     }

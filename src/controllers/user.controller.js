@@ -21,6 +21,14 @@ const show = async (req, res) => {
   }
 };
 
+const getIntroUsers = async (req, res) => {
+  const { page, limit } = req;
+  const userId = req.user?.id;
+
+  const { items, total } = await userService.getIntroUsers(page, limit, userId);
+  res.paginate({ items, total });
+};
+
 const getUserPosts = async (req, res) => {
   const username = req.params.key;
   const { page, limit } = req;
@@ -56,4 +64,12 @@ const destroy = async (req, res) => {
   response.success(res, 204);
 };
 
-module.exports = { show, index, store, update, destroy, getUserPosts };
+module.exports = {
+  show,
+  index,
+  store,
+  update,
+  destroy,
+  getUserPosts,
+  getIntroUsers,
+};

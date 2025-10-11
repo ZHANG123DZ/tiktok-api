@@ -2,16 +2,18 @@ require('dotenv').config();
 require('module-alias/register');
 
 const sendVerifyEmailJob = require('@/jobs/sendVerifyEmailJob');
-const sendCodeJob = require('@/jobs/sendCodeJob');
+const sendEmailCodeJob = require('@/jobs/sendEmailCodeJob');
+const sendPhoneCodeJob = require('@/jobs/sendPhoneCodeJob');
 const scheduledAnnouncementEmail = require('@/jobs/scheduledAnnouncementEmail');
 const queueService = require('@/services/queue.service');
 const sendForgotPasswordJob = require('@/jobs/sendForgotPasswordJob');
 
 const handlers = {
   sendVerifyEmailJob,
-  sendCodeJob,
+  sendEmailCodeJob,
   scheduledAnnouncementEmail,
   sendForgotPasswordJob,
+  sendPhoneCodeJob,
 };
 
 async function jobProcess(job) {

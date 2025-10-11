@@ -83,6 +83,7 @@ module.exports = (sequelize, DataTypes) => {
       },
       role: {
         type: DataTypes.STRING(100),
+        type: DataTypes.STRING,
         allowNull: true,
       },
       status: {
@@ -95,10 +96,25 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: true,
         field: 'two_factor_enabled',
       },
-      loginProvider: {
+      isVerifiedBadge: {
+        type: DataTypes.BOOLEAN,
+        allowNull: true,
+        field: 'is_verified_badge',
+        defaultValue: false,
+      },
+      last_seen: {
+        type: DataTypes.DATE(6),
+        allowNull: true,
+      },
+      login_provider: {
         type: DataTypes.STRING(100),
         allowNull: true,
         field: 'login_provider',
+      },
+      lastSeen: {
+        type: DataTypes.DATE(6),
+        allowNull: true,
+        field: 'last_seen',
       },
       lastLoginAt: {
         type: DataTypes.DATE(6),
@@ -139,7 +155,7 @@ module.exports = (sequelize, DataTypes) => {
       as: 'emailVerification',
     });
     User.hasMany(db.Comment, {
-      foreignKey: 'userId',
+      foreignKey: 'authorId',
       as: 'comments',
     });
     User.hasMany(db.Follow, {

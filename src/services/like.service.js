@@ -71,12 +71,12 @@ class LikesService {
 
     await Like.create(where);
 
-    await incrementField(Model, 'likeCount', +1, { id: likeAbleId });
+    await incrementField(Model, 'like_count', +1, { id: likeAbleId });
 
     if (Model === Post) {
       const post = await Post.findByPk(likeAbleId);
       if (post) {
-        await incrementField(User, 'likeCount', +1, { id: post.authorId });
+        await incrementField(User, 'like_count', +1, { id: post.authorId });
       }
     }
 
@@ -98,11 +98,11 @@ class LikesService {
     await Like.destroy({
       where: where,
     });
-    await incrementField(Model, 'likeCount', -1, { id: likeAbleId });
+    await incrementField(Model, 'like_count', -1, { id: likeAbleId });
     if (Model === Post) {
       const post = await Post.findByPk(likeAbleId);
       if (post) {
-        await incrementField(User, 'likeCount', -1, { id: post.authorId });
+        await incrementField(User, 'like_count', -1, { id: post.authorId });
       }
     }
     return;

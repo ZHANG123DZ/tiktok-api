@@ -11,7 +11,7 @@ router.post('/refresh-token', authController.refreshTok);
 router.post('/forgot-password', authController.sendForgotPassword);
 router.post('/reset-password', authController.resetPassword);
 router.post('/change-password', auth, authController.changePassword);
-router.patch('/edit-profile', auth, authController.editProfile);
+router.post('/edit-profile', auth, authController.editProfile);
 router.patch('/settings', auth, authController.settings);
 router.get('/settings', auth, authController.userSetting);
 router.post('/send-code', authController.sendCode);

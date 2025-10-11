@@ -1,14 +1,14 @@
-const ConversationService = require("@/services/conversation.service");
+const ConversationService = require('@/services/conversation.service');
 
-const response = require("@/utils/response");
-const throwError = require("@/utils/throwError");
+const response = require('@/utils/response');
+const throwError = require('@/utils/throwError');
 
 exports.create = async (req, res) => {
   const { id: currentUserId } = req.user;
-  const { participants_id } = req.body;
+  const { participantsId } = req.body;
   const conversation = await ConversationService.create(
     currentUserId,
-    participants_id,
+    participantsId,
     req.body
   );
   response.success(res, 201, conversation);
@@ -38,16 +38,16 @@ exports.remove = async (req, res) => {
   const { id: currentUserId } = req.user;
   const { id } = req.params;
   await ConversationService.remove(id, currentUserId);
-  response.success(res, 200, { message: "Conversation deleted" });
+  response.success(res, 200, { message: 'Conversation deleted' });
 };
 
 exports.getOrCreate = async (req, res) => {
-  const { participant_id } = req.body;
+  const { participantId } = req.body;
   const userId = req.user.id;
 
   const conversation = await ConversationService.getOrCreate(
     userId,
-    participant_id
+    participantId
   );
   response.success(res, 200, conversation);
 };
