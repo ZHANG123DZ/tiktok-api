@@ -49,6 +49,7 @@ class CommentsService {
 
       const commentIds = allComments.map((c) => c.id);
       let likedSet = new Set();
+      let likedAuthorSet = new Set();
       if (currentUserId && commentIds.length > 0) {
         const liked = await Like.findAll({
           where: {
@@ -58,6 +59,14 @@ class CommentsService {
           },
         });
         likedSet = new Set(liked.map((l) => l.likeAbleId));
+        const likedAuthor = await Like.findAll({
+          where: {
+            userId: post.authorId,
+            likeAbleId: commentIds,
+            likeAbleType: 'comment',
+          },
+        });
+        likedAuthorSet = new Set(likedAuthor.map((l) => l.likeAbleId));
       }
 
       function buildCommentTree(comments, parentId = null) {
@@ -68,6 +77,7 @@ class CommentsService {
             return {
               ...c.toJSON(),
               isLiked: likedSet.has(c.id),
+              isAuthorLiked: likedAuthorSet.has(c.id),
               isEdited:
                 new Date(c.updatedAt).getTime() -
                   new Date(c.createdAt).getTime() >
