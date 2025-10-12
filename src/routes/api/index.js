@@ -21,8 +21,6 @@ const translateRouter = require('./translate.route');
 const broadcastingRouter = require('./broadcasting.route');
 const auth = require('@/middlewares/auth');
 
-router.use('/posts', postRouter);
-router.use('/posts/:slug/comments', commentRouter);
 router.use('/broadcasting', broadcastingRouter);
 router.use('/auth', authRouter);
 router.use('/users', userRouter);
@@ -39,5 +37,7 @@ router.use('/conversations/:conversation/messages', messagesRouter);
 router.use('/conversations', auth, conversationRouter);
 router.use('/search', searchRouter);
 router.use('/translate', translateRouter);
+router.use('/posts', postRouter);
+router.use('/posts/:postId/comments', commentRouter);
 
 module.exports = router;

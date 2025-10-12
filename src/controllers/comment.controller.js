@@ -1,15 +1,15 @@
-const commentsService = require("@/services/comment.service");
+const commentsService = require('@/services/comment.service');
 
-const response = require("@/utils/response");
-const throwError = require("@/utils/throwError");
+const response = require('@/utils/response');
+const throwError = require('@/utils/throwError');
 
 const index = async (req, res) => {
-  const slug = req.params.slug;
+  const postId = req.params.postId;
   const currentUserId = req.user?.id;
   const { page, limit } = req;
   try {
     const comments = await commentsService.getPostComment(
-      slug,
+      postId,
       page,
       limit,
       currentUserId
@@ -23,7 +23,7 @@ const index = async (req, res) => {
 const show = async (req, res) => {
   const comment = await commentsService.getById(req.params.id);
 
-  if (!comment) throwError(404, "Not Found.");
+  if (!comment) throwError(404, 'Not Found.');
 
   response.success(res, 200, comment);
 };
@@ -37,7 +37,7 @@ const store = async (req, res) => {
 const update = async (req, res) => {
   const comment = await commentsService.update(req.params.id, req.body);
 
-  if (!comment) throwError(404, "Not Found.");
+  if (!comment) throwError(404, 'Not Found.');
 
   response.success(res, 201, comment);
 };
@@ -45,7 +45,7 @@ const update = async (req, res) => {
 const destroy = async (req, res) => {
   const result = await commentsService.remove(req.params.id);
 
-  if (!result) throwError(404, "Not Found.");
+  if (!result) throwError(404, 'Not Found.');
 
   response.success(res, 204);
 };

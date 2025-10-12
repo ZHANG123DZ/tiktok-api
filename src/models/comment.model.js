@@ -14,7 +14,7 @@ module.exports = (sequelize, DataTypes) => {
         field: 'post_id',
       },
 
-      userId: {
+      authorId: {
         type: DataTypes.BIGINT.UNSIGNED,
         allowNull: false,
         references: {
@@ -23,7 +23,7 @@ module.exports = (sequelize, DataTypes) => {
         },
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE',
-        field: 'user_id',
+        field: 'author_id',
       },
 
       content: {
@@ -65,22 +65,22 @@ module.exports = (sequelize, DataTypes) => {
   );
   Comment.associate = (db) => {
     Comment.belongsTo(db.Post, {
-      foreignKey: 'post_id',
+      foreignKey: 'postId',
       as: 'post',
     });
 
     Comment.belongsTo(db.User, {
-      foreignKey: 'user_id',
+      foreignKey: 'authorId',
       as: 'author',
     });
 
     Comment.belongsTo(db.Comment, {
-      foreignKey: 'parent_id',
+      foreignKey: 'parentId',
       as: 'parent',
     });
 
     Comment.hasMany(db.Comment, {
-      foreignKey: 'parent_id',
+      foreignKey: 'parentId',
       as: 'replies',
     });
   };

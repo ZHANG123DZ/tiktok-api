@@ -4,92 +4,97 @@ const { Comment, Post, User, Like, Sequelize } = require('@/models/index');
 const { where, Op } = require('sequelize');
 
 class CommentsService {
-  async getPostComment(slug, page, limit, currentUserId) {
-    const post = await Post.findOne({ where: { slug } });
-    if (!post) throw new Error('Post not found');
+  async getPostComment(id, page, limit, currentUserId) {
+    try {
+      const post = await Post.findOne({ where: { id } });
+      if (!post) throw new Error('Post not found');
 
-    const offset = (page - 1) * limit;
+      const offset = (page - 1) * limit;
 
-    const parentComments = await Comment.findAll({
-      where: {
-        postId: post.id,
-        parentId: null,
-      },
-      include: [
-        {
-          model: User,
-          as: 'author',
-          attributes: ['id', 'name', 'avatar', 'username'],
-        },
-      ],
-      order: [['likeCount', 'ASC']],
-      limit,
-      offset,
-    });
-
-    const parentIds = parentComments.map((c) => c.id);
-
-    const replies = await Comment.findAll({
-      where: {
-        postId: post.id,
-        parentId: parentIds.length > 0 ? parentIds : null,
-      },
-      include: [
-        {
-          model: User,
-          as: 'author',
-          attributes: ['id', 'name', 'avatar', 'username'],
-        },
-      ],
-      order: [['likeCount', 'ASC']],
-    });
-
-    const allComments = [...parentComments, ...replies];
-
-    const commentIds = allComments.map((c) => c.id);
-    let likedSet = new Set();
-    if (currentUserId && commentIds.length > 0) {
-      const liked = await Like.findAll({
+      const parentComments = await Comment.findAll({
         where: {
-          userId: currentUserId,
-          likeAbleId: commentIds,
-          likeAbleType: 'comment',
+          postId: post.id,
+          parentId: null,
+        },
+        include: [
+          {
+            model: User,
+            as: 'author',
+            attributes: ['id', 'name', 'avatar', 'username'],
+          },
+        ],
+        order: [['likeCount', 'ASC']],
+        limit,
+        offset,
+      });
+
+      const parentIds = parentComments.map((c) => c.id);
+
+      const replies = await Comment.findAll({
+        where: {
+          postId: post.id,
+          parentId: parentIds.length > 0 ? parentIds : null,
+        },
+        include: [
+          {
+            model: User,
+            as: 'author',
+            attributes: ['id', 'name', 'avatar', 'username'],
+          },
+        ],
+        order: [['likeCount', 'ASC']],
+      });
+
+      const allComments = [...parentComments, ...replies];
+
+      const commentIds = allComments.map((c) => c.id);
+      let likedSet = new Set();
+      if (currentUserId && commentIds.length > 0) {
+        const liked = await Like.findAll({
+          where: {
+            userId: currentUserId,
+            likeAbleId: commentIds,
+            likeAbleType: 'comment',
+          },
+        });
+        likedSet = new Set(liked.map((l) => l.likeAbleId));
+      }
+
+      function buildCommentTree(comments, parentId = null) {
+        return comments
+          .filter((c) => c.parentId === parentId)
+          .map((c) => {
+            const children = buildCommentTree(comments, c.id);
+            return {
+              ...c.toJSON(),
+              isLiked: likedSet.has(c.id),
+              isEdited:
+                new Date(c.updatedAt).getTime() -
+                  new Date(c.createdAt).getTime() >
+                1000,
+              replies: children,
+            };
+          });
+      }
+
+      const tree = buildCommentTree(allComments);
+
+      const total = await Comment.count({
+        where: {
+          postId: post.id,
         },
       });
-      likedSet = new Set(liked.map((l) => l.likeAbleId));
+
+      return {
+        comments: tree,
+        total,
+        page,
+        limit,
+      };
+    } catch (err) {
+      console.log(err);
+      return;
     }
-
-    function buildCommentTree(comments, parentId = null) {
-      return comments
-        .filter((c) => c.parentId === parentId)
-        .map((c) => {
-          const children = buildCommentTree(comments, c.id);
-          return {
-            ...c.toJSON(),
-            isLiked: likedSet.has(c.id),
-            isEdited:
-              new Date(c.updatedAt).getTime() -
-                new Date(c.createdAt).getTime() >
-              1000,
-            replies: children,
-          };
-        });
-    }
-
-    const tree = buildCommentTree(allComments);
-
-    const total = await Comment.count({
-      where: {
-        postId: post.id,
-      },
-    });
-
-    return {
-      comments: tree,
-      total,
-      page,
-      limit,
-    };
   }
 
   async getById(id) {
