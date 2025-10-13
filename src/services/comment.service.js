@@ -121,34 +121,41 @@ class CommentsService {
   }
 
   async create(data, currentUserId) {
-    const comment = await Comment.create(data);
-    await comment.reload({
-      include: [
-        {
-          model: User,
-          as: 'author',
-          attributes: ['id', 'name', 'avatar'],
-        },
-        {
-          model: Comment,
-          as: 'replies',
-          attributes: ['id', 'content', 'userId', 'postId'],
-        },
-      ],
-    });
-    comment.dataValues.isLiked = false;
-    await incrementField(Post, 'comment_count', +1, {
-      id: comment.postId,
-    });
-    comment.dataValues.author = {
-      avatar: comment.author.avatar,
-      name: comment.author.name,
-    };
+    try {
+      data.authorId = currentUserId;
+      const comment = await Comment.create(data);
+      await comment.reload({
+        include: [
+          {
+            model: User,
+            as: 'author',
+            attributes: ['id', 'name', 'avatar'],
+          },
+          {
+            model: Comment,
+            as: 'replies',
+            attributes: ['id', 'content', 'authorId', 'postId'],
+          },
+        ],
+      });
+      comment.dataValues.isLiked = false;
+      comment.dataValues.isAuthorLiked = false;
+      await incrementField(Post, 'comment_count', +1, {
+        id: comment.postId,
+      });
+      comment.dataValues.author = {
+        avatar: comment.author.avatar,
+        name: comment.author.name,
+      };
 
-    comment.dataValues.createdAt = comment.createdAt;
-    comment.dataValues.likeCount = Number(comment.likeCount);
-    pusher.trigger(`post-${data.postId}-comments`, 'new-comment', comment);
-    return comment;
+      comment.dataValues.createdAt = comment.createdAt;
+      comment.dataValues.likeCount = Number(comment.likeCount);
+      pusher.trigger(`post-${data.postId}-comments`, 'new-comment', comment);
+      return comment;
+    } catch (err) {
+      console.log(err);
+      return;
+    }
   }
 
   async update(id, data) {
@@ -191,15 +198,17 @@ class CommentsService {
   }
 
   async remove(id) {
-    const comment = await Comment.findByPk(id);
-    await Comment.destroy({ where: { id } });
-    await incrementField(Post, 'comment_count', -1, { id: comment.postId });
-    pusher.trigger(
-      `post-${comment.postId}-comments`,
-      'delete-comment',
-      Number(id)
-    );
-    return comment;
+    try {
+      const comment = await Comment.findByPk(id);
+      await Comment.destroy({ where: { parentId: id } });
+      await Comment.destroy({ where: { id } });
+      await incrementField(Post, 'comment_count', -1, { id: comment.postId });
+      pusher.trigger(`post-${comment.postId}-comments`, 'delete-comment', id);
+      return comment;
+    } catch (err) {
+      console.log(err);
+      return;
+    }
   }
 }
 

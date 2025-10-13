@@ -29,9 +29,10 @@ const show = async (req, res) => {
 };
 
 const store = async (req, res) => {
-  const currentUserId = req.user.id;
-  const comment = await commentsService.create(req.body, currentUserId);
-  response.success(res, 201, comment);
+  const currentUserId = req.user?.id;
+  const data = req.body;
+  const comment = await commentsService.create(data, currentUserId);
+  return response.success(res, 201, comment);
 };
 
 const update = async (req, res) => {
@@ -43,7 +44,8 @@ const update = async (req, res) => {
 };
 
 const destroy = async (req, res) => {
-  const result = await commentsService.remove(req.params.id);
+  const id = req.params.id;
+  const result = await commentsService.remove(id);
 
   if (!result) throwError(404, 'Not Found.');
 
