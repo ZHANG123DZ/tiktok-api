@@ -1,11 +1,26 @@
-const notificationService = require("@/services/notification.service");
-const response = require("@/utils/response");
+const notificationService = require('@/services/notification.service');
+const response = require('@/utils/response');
+
+const getAllNotify = async (req, res) => {
+  const currentUserId = req.user?.id;
+  const { page, limit } = req;
+  try {
+    const notification = await notificationService.getAllNotify(
+      page,
+      limit,
+      currentUserId
+    );
+    return response.success(res, 200, notification);
+  } catch (error) {
+    return response.error(res, 404, error);
+  }
+};
 
 const getNotify = async (req, res) => {
   const currentUserId = req.user?.id;
   const { page, limit } = req;
   try {
-    const notification = await notificationService.getNotify(
+    const notification = await notificationService.getAllNotify(
       page,
       limit,
       currentUserId
@@ -39,4 +54,4 @@ const readAll = async (req, res) => {
   }
 };
 
-module.exports = { getNotify, update, readAll };
+module.exports = { getAllNotify, update, readAll, getNotify };

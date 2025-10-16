@@ -1,30 +1,30 @@
 const { User, Post, Comment, Notification } = require('@/models/index');
 
 class NotificationService {
-  async getNotify(page, limit, userId) {
+  async getAllNotify(page, limit, userId) {
     const offset = (page - 1) * limit;
 
     const { rows: items, count: total } = await Notification.findAndCountAll({
       where: { userId },
       limit,
       offset,
-      order: [['created_at', 'DESC']],
+      order: [['createdAt', 'DESC']],
       include: [
         {
           model: Post,
           as: 'post',
-          attributes: ['id', 'title', 'slug', 'cover'],
+          attributes: ['id', 'title', 'authorUserName', 'thumbnail'],
           required: false,
         },
         {
           model: Comment,
           as: 'comment',
-          attributes: ['id', 'content', 'post_id'],
+          attributes: ['id', 'content', 'postId'],
           include: [
             {
               model: Post,
               as: 'post',
-              attributes: ['id', 'title', 'slug'],
+              attributes: ['id', 'title', 'authorUserName', 'thumbnail'],
             },
           ],
           required: false,
@@ -44,7 +44,10 @@ class NotificationService {
       let link = '';
 
       switch (notify.type) {
-        case 'like':
+        // case 'like_post':
+        // // if (notify.comment) {
+        // // }
+        case 'like_comment':
           if (notify.post) {
             message = `${notify.follower?.name || 'Someone'} liked your post "${
               notify.post.title
@@ -64,8 +67,8 @@ class NotificationService {
 
         case 'follow':
           if (notify.follower) {
-            message = `${notify.follower.name} started following you`;
-            link = `/profile/${notify.follower.username}`;
+            message = `${notify.follower.name}`;
+            link = `/@${notify.follower.username}`;
           }
           break;
 
@@ -89,8 +92,8 @@ class NotificationService {
         type: notify.type,
         message,
         link,
-        read: !!notify.read_at,
-        createdAt: notify.created_at,
+        read: !!notify.readAt,
+        createdAt: notify.createdAt,
       };
     });
 
@@ -104,8 +107,8 @@ class NotificationService {
 
   async readAll(userId) {
     await Notification.update(
-      { read_at: new Date() },
-      { where: { user_id: userId } }
+      { readAt: new Date() },
+      { where: { userId: userId } }
     );
     return;
   }

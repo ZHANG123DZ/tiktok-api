@@ -53,17 +53,19 @@ class authService {
     }
   }
 
-  async login(data) {
+  async login(data, isAuth = false) {
     const auth = await User.findOne({ where: { email: data?.email } });
     if (!auth) {
       throw new Error('Dang nhap that bai');
     }
-
-    const isMatch = await bcrypt.compare(data.password, auth.password);
-    if (!isMatch) {
-      throw new Error('Dang nhap that bai');
+    if (!isAuth) {
+      const isMatch = await bcrypt.compare(data.password, auth.password);
+      if (!isMatch) {
+        throw new Error('Dang nhap that bai');
+      }
+      delete auth.password;
     }
-    delete auth.password;
+
     return auth.dataValues;
   }
 

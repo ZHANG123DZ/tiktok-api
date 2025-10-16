@@ -1,5 +1,5 @@
 const response = require('@/utils/response');
-
+const qs = require('qs');
 const authService = require('@/services/auth.service');
 const { createCookie, readCookie } = require('@/utils/cookie');
 const accessToken = require('@/utils/accessToken');
@@ -8,6 +8,7 @@ const refreshToken = require('@/utils/refreshToken');
 const queue = require('@/utils/queue');
 const userService = require('@/services/user.service');
 const forgotPasswordToken = require('@/utils/forgotPasswordToken');
+const { default: axios } = require('axios');
 
 const auth = async (req, res) => {
   try {
@@ -105,6 +106,90 @@ const register = async (req, res) => {
   }
 };
 
+const social = async (req, res) => {
+  const { social } = req.params;
+  const { code } = req.body;
+  try {
+    let tokenResponse, userInfo;
+
+    if (social === 'google') {
+      tokenResponse = await axios.post(
+        'https://oauth2.googleapis.com/token',
+        qs.stringify({
+          client_id: process.env.GOOGLE_CLIENT_ID,
+          client_secret: process.env.GOOGLE_CLIENT_SECRET,
+          redirect_uri: 'http://localhost:5173',
+          grant_type: 'authorization_code',
+          code,
+        }),
+        { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
+      );
+      const { access_token, id_token } = tokenResponse.data;
+
+      userInfo = await axios.get(
+        'https://www.googleapis.com/oauth2/v3/userinfo',
+        {
+          headers: { Authorization: `Bearer ${access_token}` },
+        }
+      );
+    }
+
+    if (social === 'facebook') {
+      tokenResponse = await axios.get(
+        'https://graph.facebook.com/v12.0/oauth/access_token',
+        {
+          params: {
+            client_id: process.env.FACEBOOK_APP_ID,
+            client_secret: process.env.FACEBOOK_APP_SECRET,
+            redirect_uri: 'http://localhost:5173',
+            code,
+          },
+        }
+      );
+
+      const { access_token } = tokenResponse.data;
+      userInfo = await axios.get('https://graph.facebook.com/me', {
+        params: { fields: 'id,name,email', access_token },
+      });
+    }
+    const emailData = userInfo.data;
+    let user;
+    const exitsEmail = await authService.checkEmail(emailData.email);
+    if (!exitsEmail) {
+      const pass = Array.from(
+        crypto.getRandomValues(new Uint8Array(12)),
+        (b) =>
+          'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+'[
+            b % 74
+          ]
+      ).join('');
+      user = await authService.register({
+        name: emailData.name,
+        password: pass,
+        avatar: emailData.picture,
+        email: emailData.email,
+      });
+    } else {
+      user = await authService.login({ email: emailData.email }, true);
+    }
+
+    const token = accessToken.create({ sub: user.id });
+    const refreshTok = refreshToken.create({ sub: user.id });
+    if (!token) {
+      return response.error(res, 500, 'Không tạo được token vui lòng thử lại');
+    }
+
+    createCookie(res, 'token', token);
+    createCookie(res, 'refresh-token', refreshTok);
+    return response.success(res, 200, user);
+  } catch (err) {
+    console.error(err);
+    return res
+      .status(500)
+      .json({ success: false, message: 'Social login failed' });
+  }
+};
+
 const sendForgotPassword = async (req, res) => {
   const data = req.body;
   try {
@@ -198,15 +283,21 @@ const settings = async (req, res) => {
 
 const sendCode = async (req, res) => {
   const { target, ...data } = req.body;
+  const { method } = req.query;
   const userId = req.user?.id;
   try {
     const auth = await authService.sendCode({ data, target, userId });
 
     if (target.includes('@')) {
       auth.email = target;
+    } else {
+      auth.phone = '+84' + target.slice(1);
     }
-    if (auth.code !== '') {
-      queue.dispatch('sendCodeJob', auth);
+    if (auth.code !== '' && method === 'email') {
+      queue.dispatch('sendEmailCodeJob', auth);
+    }
+    if (auth.code !== '' && method === 'phone') {
+      queue.dispatch('sendPhoneCodeJob', auth);
     }
     response.success(res, 200);
   } catch (error) {
@@ -260,7 +351,9 @@ const logout = async (req, res) => {
   const token = readCookie(req, 'token');
   const data = await authService.auth(token);
   const newToken = accessToken.create(data, { expiresIn: '1s' });
+  const newRefreshToken = refreshToken.create(data, { expiresIn: '1s' });
   createCookie(res, 'token', newToken, { maxAge: 1000 });
+  createCookie(res, 'refresh-token', newRefreshToken, { maxAge: 1000 });
   response.success(res, 200);
 };
 
@@ -282,4 +375,5 @@ module.exports = {
   verifyEmail,
   sendForgotPassword,
   refreshTok,
+  social,
 };
