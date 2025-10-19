@@ -29,7 +29,6 @@ module.exports = {
       },
       updated_at: {
         type: Sequelize.DATE(6),
-
         onUpdate: Sequelize.literal('CURRENT_TIMESTAMP(6)'),
       },
       deleted_at: {

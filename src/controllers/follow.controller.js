@@ -1,5 +1,5 @@
-const followsService = require("@/services/follow.service");
-const response = require("@/utils/response");
+const followsService = require('@/services/follow.service');
+const response = require('@/utils/response');
 
 const getFollowers = async (req, res) => {
   const { type, id } = req.params;
@@ -13,7 +13,7 @@ const getFollowers = async (req, res) => {
     return response.error(
       res,
       400,
-      "Lấy danh sách những người theo dõi thất bại"
+      'Lấy danh sách những người theo dõi thất bại'
     );
   }
 };
@@ -28,44 +28,46 @@ const getFollowing = async (req, res) => {
     return response.error(
       res,
       400,
-      "Lấy danh sách những người đang theo dõi thất bại"
+      'Lấy danh sách những người đang theo dõi thất bại'
     );
   }
 };
 
 const follow = async (req, res) => {
   const { type, id } = req.params;
-  const user = req.user;
+  const userId = req.user?.id;
+
   try {
-    await followsService.follow(user.id, type, id);
-    return response.success(res, 200, "Đã theo dõi thành công");
+    await followsService.follow(userId, type, id);
+    return response.success(res, 200, 'Đã theo dõi thành công');
   } catch (error) {
     console.log(error);
-    return response.error(res, 400, "Theo dõi thất bại");
+    return response.error(res, 400, 'Theo dõi thất bại');
   }
 };
 
 const unfollow = async (req, res) => {
   const { type, id } = req.params;
-  const user = req.user;
+  const userId = req.user?.id;
   try {
-    await followsService.unfollow(user.id, type, id);
-    return response.success(res, 204, "Đã hủy theo dõi thành công");
+    await followsService.unfollow(userId, type, id);
+    return response.success(res, 204, 'Đã hủy theo dõi thành công');
   } catch (error) {
     console.log(error);
-    return response.error(res, 400, "Hủy theo dõi thất bại");
+    return response.error(res, 400, 'Hủy theo dõi thất bại');
   }
 };
 
 const check = async (req, res) => {
   const { type, id } = req.params;
-  const user = req.user;
+  const userId = req.user?.id;
+
   try {
-    const isFollowing = await followsService.check(user.id, type, id);
+    const isFollowing = await followsService.check(userId, type, id);
     return response.success(res, 200, isFollowing);
   } catch (error) {
     console.log(error);
-    return response.error(res, 400, "Lỗi kiểm tra trạng thái theo dõi");
+    return response.error(res, 400, 'Lỗi kiểm tra trạng thái theo dõi');
   }
 };
 

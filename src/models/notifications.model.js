@@ -20,6 +20,17 @@ module.exports = (sequelize, DataTypes) => {
         onUpdate: 'CASCADE',
         field: 'user_id',
       },
+      actorId: {
+        type: DataTypes.BIGINT.UNSIGNED,
+        allowNull: true,
+        references: {
+          model: 'users',
+          key: 'id',
+        },
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+        field: 'actor_id',
+      },
       notifiableId: {
         type: DataTypes.BIGINT.UNSIGNED,
         allowNull: false,
@@ -49,21 +60,25 @@ module.exports = (sequelize, DataTypes) => {
   );
   Notification.associate = (db) => {
     Notification.belongsTo(db.User, {
-      foreignKey: 'user_id',
+      foreignKey: 'userId',
       as: 'user',
     });
     Notification.belongsTo(db.User, {
-      foreignKey: 'notifiable_id',
+      foreignKey: 'actorId',
+      as: 'actor',
+    });
+    Notification.belongsTo(db.User, {
+      foreignKey: 'notifiableId',
       as: 'follower',
       constraints: false,
     });
     Notification.belongsTo(db.Post, {
-      foreignKey: 'notifiable_id',
+      foreignKey: 'notifiableId',
       as: 'post',
       constraints: false,
     });
     Notification.belongsTo(db.Comment, {
-      foreignKey: 'notifiable_id',
+      foreignKey: 'notifiableId',
       as: 'comment',
       constraints: false,
     });

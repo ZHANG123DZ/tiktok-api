@@ -1,103 +1,200 @@
+const checkFollowManyUsers = require('@/helper/checkFollowManyUsers');
 const { User, Post, Comment, Notification } = require('@/models/index');
 
 class NotificationService {
   async getAllNotify(page, limit, userId) {
     const offset = (page - 1) * limit;
 
-    const { rows: items, count: total } = await Notification.findAndCountAll({
+    const { rows, count: total } = await Notification.findAndCountAll({
       where: { userId },
       limit,
       offset,
       order: [['createdAt', 'DESC']],
       include: [
         {
-          model: Post,
-          as: 'post',
-          attributes: ['id', 'title', 'authorUserName', 'thumbnail'],
-          required: false,
-        },
-        {
-          model: Comment,
-          as: 'comment',
-          attributes: ['id', 'content', 'postId'],
-          include: [
-            {
-              model: Post,
-              as: 'post',
-              attributes: ['id', 'title', 'authorUserName', 'thumbnail'],
-            },
-          ],
-          required: false,
-        },
-        {
           model: User,
-          as: 'follower',
-          attributes: ['id', 'name', 'username', 'avatar'],
-          required: false,
+          as: 'actor',
+          attributes: ['id', 'username', 'name', 'avatar'],
         },
       ],
     });
 
-    const mappedItems = items.map((n) => {
-      const notify = n.get({ plain: true });
-      let message = '';
-      let link = '';
+    const actorIds = [...new Set(rows.map((n) => n.actor?.id).filter(Boolean))];
 
-      switch (notify.type) {
-        // case 'like_post':
-        // // if (notify.comment) {
-        // // }
-        case 'like_comment':
-          if (notify.post) {
-            message = `${notify.follower?.name || 'Someone'} liked your post "${
-              notify.post.title
-            }"`;
-            link = `/blog/${notify.post.slug}`;
+    const followMap = await checkFollowManyUsers(userId, actorIds);
+
+    const mappedItems = await Promise.all(
+      rows.map(async (n) => {
+        const notify = n.get({ plain: true });
+        let link = '';
+
+        switch (notify.type) {
+          case 'like_post':
+          case 'new_post': {
+            const post = await Post.findByPk(notify.notifiableId, {
+              attributes: ['id', 'authorUserName', 'title', 'thumbnail'],
+            });
+            if (post) link = `/@${post.authorUserName}/video/${post.id}`;
+            break;
           }
-          break;
 
-        case 'new_comment':
-          if (notify.comment?.post) {
-            message = `${
-              notify.follower?.name || 'Someone'
-            } commented on your post "${notify.comment.post.title}"`;
-            link = `/blog/${notify.comment.post.slug}`;
+          case 'like_comment':
+          case 'new_comment':
+          case 'reply_comment': {
+            const comment = await Comment.findByPk(notify.notifiableId, {
+              include: [
+                {
+                  model: Post,
+                  as: 'post',
+                  attributes: ['id', 'authorUserName', 'thumbnail'],
+                },
+              ],
+            });
+            if (comment?.post)
+              link = `/@${comment.post.authorUserName}/video/${comment.post.id}?comment=${comment.id}`;
+            break;
           }
-          break;
 
-        case 'follow':
-          if (notify.follower) {
-            message = `${notify.follower.name}`;
-            link = `/@${notify.follower.username}`;
+          case 'follower': {
+            const follower = await User.findByPk(notify.notifiableId, {
+              attributes: ['username'],
+            });
+            if (follower) link = `/@${follower.username}`;
+            break;
           }
-          break;
 
-        case 'new_post':
-          if (notify.post) {
-            message = `${
-              notify.follower?.name || 'Someone'
-            } created a new post "${notify.post.title}"`;
-            link = `/blog/${notify.post.slug}`;
-          }
-          break;
+          default:
+            link = '/';
+        }
 
-        default:
-          message = 'You have a new notification';
-          link = '/';
-          break;
-      }
+        const actor = notify.actor
+          ? {
+              ...notify.actor,
+              isFollow: followMap.get(notify.actor.id) || false,
+            }
+          : null;
 
-      return {
-        id: notify.id,
-        type: notify.type,
-        message,
-        link,
-        read: !!notify.readAt,
-        createdAt: notify.createdAt,
-      };
+        return {
+          id: notify.id,
+          type: notify.type,
+          read: !!notify.readAt,
+          actor,
+          link,
+          createdAt: notify.createdAt,
+        };
+      })
+    );
+
+    const grouped = mappedItems.reduce((acc, item) => {
+      if (!acc[item.type]) acc[item.type] = [];
+      acc[item.type].push(item);
+      return acc;
+    }, {});
+
+    return { items: grouped, total };
+  }
+
+  async getAllNotifyByType(page, limit, userId, type) {
+    const offset = (page - 1) * limit;
+
+    const { rows, count: total } = await Notification.findAndCountAll({
+      where: { userId, type },
+      limit,
+      offset,
+      order: [['createdAt', 'DESC']],
+      include: [
+        {
+          model: User,
+          as: 'actor',
+          attributes: ['id', 'username', 'name', 'avatar'],
+        },
+      ],
     });
 
+    const actorIds = [...new Set(rows.map((n) => n.actor?.id).filter(Boolean))];
+
+    const followMap = await checkFollowManyUsers(userId, actorIds);
+
+    const mappedItems = await Promise.all(
+      rows.map(async (n) => {
+        const notify = n.get({ plain: true });
+        let link = '';
+
+        switch (notify.type) {
+          case 'like_post':
+          case 'new_post': {
+            const post = await Post.findByPk(notify.notifiableId, {
+              attributes: ['id', 'authorUserName', 'title', 'thumbnail'],
+            });
+            if (post) link = `/@${post.authorUserName}/video/${post.id}`;
+            break;
+          }
+
+          case 'like_comment':
+          case 'new_comment':
+          case 'reply_comment': {
+            const comment = await Comment.findByPk(notify.notifiableId, {
+              include: [
+                {
+                  model: Post,
+                  as: 'post',
+                  attributes: ['id', 'authorUserName', 'thumbnail'],
+                },
+              ],
+            });
+            if (comment?.post)
+              link = `/@${comment.post.authorUserName}/video/${comment.post.id}?comment=${comment.id}`;
+            break;
+          }
+
+          case 'follower': {
+            const follower = await User.findByPk(notify.notifiableId, {
+              attributes: ['username'],
+            });
+            if (follower) link = `/@${follower.username}`;
+            break;
+          }
+
+          default:
+            link = '/';
+        }
+
+        const actor = notify.actor
+          ? {
+              ...notify.actor,
+              isFollow: followMap.get(notify.actor.id) || false,
+            }
+          : null;
+
+        return {
+          id: notify.id,
+          type: notify.type,
+          read: !!notify.readAt,
+          actor,
+          link,
+          createdAt: notify.createdAt,
+        };
+      })
+    );
+
     return { items: mappedItems, total };
+  }
+
+  async create({ type, userId, actorId, notifiableId, notifiableType }) {
+    if (!type || !userId || !notifiableId || !notifiableType) {
+      throw new Error('Thiếu dữ liệu bắt buộc để tạo thông báo.');
+    }
+
+    const notify = await Notification.create({
+      type,
+      userId,
+      actorId: actorId || null,
+      notifiableId,
+      notifiableType,
+      readAt: null,
+    });
+
+    return notify;
   }
 
   async update(data, id) {

@@ -33,7 +33,7 @@ router.use('/likes', likeRouter);
 router.use('/book-marks', bookmarkRouter);
 router.use('/media', mediaRouter);
 router.use('/upload', uploadRouter);
-router.use('/conversations/:conversation/messages', messagesRouter);
+router.use('/conversations/:conversationId/messages', messagesRouter);
 router.use('/conversations', auth, conversationRouter);
 router.use('/search', searchRouter);
 router.use('/translate', translateRouter);

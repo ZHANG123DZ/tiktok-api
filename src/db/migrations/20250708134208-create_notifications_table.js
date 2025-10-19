@@ -21,6 +21,15 @@ module.exports = {
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE',
       },
+      actor_id: {
+        type: Sequelize.BIGINT.UNSIGNED,
+        references: {
+          model: 'users',
+          key: 'id',
+        },
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+      },
       notifiable_id: {
         type: Sequelize.BIGINT.UNSIGNED,
       },

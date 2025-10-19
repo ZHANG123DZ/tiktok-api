@@ -64,3 +64,19 @@ exports.markedRead = async (req, res) => {
   );
   response.success(res, 200, conversation);
 };
+
+exports.setStatus = async (req, res) => {
+  const { status } = req.body;
+  const userId = req.user.id;
+  const conversationId = req.params.id;
+  try {
+    const conversation = await ConversationService.setStatus(
+      userId,
+      conversationId,
+      status
+    );
+    return response.success(res, 200, conversation);
+  } catch (err) {
+    return response.error(res, 404);
+  }
+};

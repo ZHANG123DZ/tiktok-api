@@ -4,13 +4,15 @@ const throwError = require('@/utils/throwError');
 
 const index = async (req, res) => {
   try {
-    const conversationId = req.params.conversation;
+    const conversationId = req.params.conversationId;
     const currentUserId = req.user?.id;
     const { page, limit } = req;
 
     const messages = await messageService.getMessages(
       conversationId,
-      currentUserId
+      currentUserId,
+      page,
+      limit
     );
 
     return response.success(res, 200, messages);
@@ -31,18 +33,22 @@ const show = async (req, res) => {
 };
 
 const store = async (req, res) => {
-  const currentUserId = req.user.id;
-  const { conversationId, content } = req.body;
+  const userId = req.user.id;
+  const conversationId = req.params.conversationId;
+
+  const { content, type, parentId } = req.body;
 
   if (!conversationId || !content) {
     throwError(400, 'Missing conversationId or content');
   }
 
-  const message = await messageService.create(
+  const message = await messageService.create({
     conversationId,
-    currentUserId,
-    content
-  );
+    userId,
+    content,
+    type,
+    parentId,
+  });
   response.success(res, 201, message);
 };
 
@@ -85,7 +91,8 @@ const destroy = async (req, res) => {
 };
 
 const chatAI = async (req, res) => {
-  const conversationId = req.params.conversation;
+  const conversationId = req.params.conversationId;
+
   const { input, botId } = req.body;
 
   if (!conversationId || !input) {

@@ -28,6 +28,15 @@ module.exports = {
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE',
       },
+      requester_id: {
+        type: Sequelize.BIGINT.UNSIGNED,
+        references: {
+          model: 'users',
+          key: 'id',
+        },
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+      },
       status: {
         type: Sequelize.ENUM('pending', 'accepted', 'blocked'),
       },

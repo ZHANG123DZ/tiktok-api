@@ -55,17 +55,17 @@ module.exports = (sequelize, DataTypes) => {
 
   MessageRead.associate = (db) => {
     MessageRead.belongsTo(db.User, {
-      foreignKey: 'user_id',
+      foreignKey: 'userId',
       as: 'user',
     });
 
     MessageRead.belongsTo(db.Conversation, {
-      foreignKey: 'conversation_id',
+      foreignKey: 'conversationId',
       as: 'conversation',
     });
 
     MessageRead.belongsTo(db.Message, {
-      foreignKey: 'message_id',
+      foreignKey: 'messageId',
       as: 'message',
     });
   };

@@ -24,6 +24,20 @@ module.exports = (sequelize, DataTypes) => {
         onUpdate: 'CASCADE',
         field: 'conversation_id',
       },
+      status: {
+        type: DataTypes.ENUM('pending', 'accepted', 'blocked'),
+      },
+      requesterId: {
+        type: DataTypes.BIGINT.UNSIGNED,
+        allowNull: false,
+        references: {
+          model: 'users',
+          key: 'id',
+        },
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+        field: 'requester_id',
+      },
     },
     {
       tableName: 'user_conversations',
@@ -40,15 +54,15 @@ module.exports = (sequelize, DataTypes) => {
   );
   UserConversation.associate = (db) => {
     UserConversation.belongsTo(db.User, {
-      foreignKey: 'user_id',
+      foreignKey: 'userId',
       as: 'user',
     });
     UserConversation.belongsTo(db.Conversation, {
-      foreignKey: 'conversation_id',
+      foreignKey: 'conversationId',
       as: 'conversation',
     });
     UserConversation.hasMany(db.MessageSystem, {
-      foreignKey: 'conversation_id',
+      foreignKey: 'conversationId',
       as: 'systemMessageThread',
     });
   };

@@ -40,6 +40,10 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.TEXT,
         allowNull: false,
       },
+      type: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+      },
       reactions: {
         type: DataTypes.JSON,
         allowNull: true,
@@ -60,24 +64,24 @@ module.exports = (sequelize, DataTypes) => {
   );
   Message.associate = (db) => {
     Message.belongsTo(db.User, {
-      foreignKey: 'user_id',
+      foreignKey: 'userId',
       as: 'sender',
     });
     Message.belongsTo(db.Message, {
-      foreignKey: 'parent_id',
+      foreignKey: 'parentId',
       as: 'parent',
     });
 
     Message.hasMany(db.Message, {
-      foreignKey: 'parent_id',
+      foreignKey: 'parentId',
       as: 'replies',
     });
     Message.belongsTo(db.Conversation, {
-      foreignKey: 'conversation_id',
+      foreignKey: 'conversationId',
       as: 'conversation',
     });
     Message.hasMany(db.MessageRead, {
-      foreignKey: 'message_id',
+      foreignKey: 'messageId',
       as: 'reads',
     });
   };

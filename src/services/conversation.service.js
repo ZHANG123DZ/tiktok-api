@@ -6,6 +6,7 @@ const {
   User,
   Message,
   MessageRead,
+  sequelize,
 } = require('@/models');
 const { Sequelize } = require('@/models');
 const { Op } = Sequelize;
@@ -37,8 +38,8 @@ class ConversationService {
 
     await UserConversation.bulkCreate(
       participantsId.map((id) => ({
-        user_id: id,
-        conversation_id: conversation.id,
+        userId: id,
+        conversationId: conversation.id,
       })),
       { ignoreDuplicates: true }
     );
@@ -51,7 +52,7 @@ class ConversationService {
         {
           model: UserConversation,
           as: 'participants',
-          where: { user_id: userId },
+          where: { userId },
           attributes: [],
         },
         {
@@ -65,79 +66,109 @@ class ConversationService {
           as: 'messages',
           separate: true,
           limit: 1,
-          order: [['created_at', 'DESC']],
+          order: [['createdAt', 'DESC']],
         },
         {
           model: MessageRead,
-          as: 'list_readers',
-          where: { user_id: userId },
+          as: 'listReader',
+          where: { userId },
           required: false,
         },
       ],
-      order: [['updated_at', 'DESC']],
+      order: [['updatedAt', 'DESC']],
     });
 
     const convIds = conversations.map((c) => c.id);
 
-    // 1. Lấy message_id cuối đã đọc
+    // Lấy messageId cuối đã đọc
     const reads = await MessageRead.findAll({
-      where: { user_id: userId },
-      attributes: ['conversation_id', 'message_id'],
+      where: { userId },
+      attributes: ['conversationId', 'messageId'],
       raw: true,
     });
 
     const lastReadMap = new Map(
-      reads.map((r) => [r.conversation_id, r.message_id])
+      reads.map((r) => [r.conversationId, r.messageId])
     );
 
     const { Op } = Sequelize;
 
-    // 2. Đếm tin chưa đọc
+    // Đếm số tin chưa đọc
     const unreadCountsArr = await Promise.all(
       convIds.map(async (convId) => {
         const lastReadId = lastReadMap.get(convId) || 0;
 
         const count = await Message.count({
           where: {
-            conversation_id: convId,
-            user_id: { [Op.ne]: userId },
+            conversationId: convId,
+            userId: { [Op.ne]: userId },
             id: { [Op.gt]: lastReadId },
           },
         });
 
-        return { conversation_id: convId, unread_count: count };
+        return { conversationId: convId, unreadCount: count };
       })
     );
 
     const unreadMap = new Map(
-      unreadCountsArr.map((u) => [u.conversation_id, u.unread_count])
+      unreadCountsArr.map((u) => [u.conversationId, u.unreadCount])
     );
 
-    // 3. Build kết quả
-    return conversations.map((conv) => {
+    // ✅ Lấy trạng thái `status` của người còn lại trong UserConversation
+    const partnerStatuses = await UserConversation.findAll({
+      where: {
+        conversationId: { [Op.in]: convIds },
+        userId: { [Op.eq]: userId },
+      },
+      attributes: ['conversationId', 'status'],
+      raw: true,
+    });
+
+    const statusMap = new Map(
+      partnerStatuses.map((p) => [p.conversationId, p.status])
+    );
+
+    const accepted = [];
+    const pending = [];
+    const blocked = [];
+
+    for (const conv of conversations) {
       const data = conv.get({ plain: true });
 
       if (data.users.length === 2) {
         const speaker = data.users.find((u) => u.id !== userId);
         data.name = speaker.name;
         data.avatar = speaker.avatar;
+        data.username = speaker.username;
       }
 
       data.lastMessage = data.messages?.[0] ?? null;
-      delete data.messages;
-
       data.unreadCount = unreadMap.get(data.id) || 0;
+      delete data.messages;
+      delete data.listReaders;
 
-      delete data.list_readers;
+      const status = statusMap.get(data.id);
+      data.status = status || null;
 
-      return data;
-    });
+      if (status === 'accepted') {
+        accepted.push(data);
+      } else if (status === 'pending') {
+        pending.push(data);
+      } else {
+        blocked.push(data);
+      }
+    }
+
+    return { accepted, pending, blocked };
   }
 
   async getById(id, userId) {
     const isParticipant = await UserConversation.findOne({
-      where: { conversation_id: id, user_id: userId },
+      where: { conversationId: id, userId },
+      attributes: ['status'],
+      raw: true,
     });
+
     if (!isParticipant) throw new Error('Forbidden');
 
     const conversation = await Conversation.findByPk(id, {
@@ -160,7 +191,7 @@ class ConversationService {
           ],
         },
       ],
-      order: [[{ model: Message, as: 'messages' }, 'created_at', 'DESC']],
+      order: [[{ model: Message, as: 'messages' }, 'createdAt', 'DESC']],
     });
 
     if (!conversation) throw new Error('Conversation not found');
@@ -168,24 +199,27 @@ class ConversationService {
     const plainConversation = conversation.toJSON();
 
     if (plainConversation.users.length === 2) {
-      plainConversation.avatar =
-        plainConversation.users.find((user) => user.id !== userId)?.avatar ||
-        null;
+      const otherUser = plainConversation.users.find((u) => u.id !== userId);
+      plainConversation.avatar = otherUser?.avatar || null;
+      plainConversation.username = otherUser?.username;
+      plainConversation.name = otherUser?.name;
     }
 
     plainConversation.messages = (plainConversation.messages || []).map(
       (mes) => ({
         ...mes,
-        author: mes.user_id === userId ? 'me' : 'other',
+        isOwnMessage: mes.userId === userId,
       })
     );
+
+    plainConversation.status = isParticipant.status;
 
     return plainConversation;
   }
 
   async update(id, userId, data) {
     const isParticipant = await UserConversation.findOne({
-      where: { conversation_id: id, user_id: userId },
+      where: { conversationId: id, userId: userId },
     });
     if (!isParticipant) throw new Error('Forbidden');
 
@@ -195,59 +229,181 @@ class ConversationService {
 
   async remove(id, userId) {
     const isParticipant = await UserConversation.findOne({
-      where: { conversation_id: id, user_id: userId },
+      where: { conversationId: id, userId: userId },
     });
     if (!isParticipant) throw new Error('Forbidden');
 
-    await Conversation.update({ deleted_at: new Date() }, { where: { id } });
+    await Conversation.update({ deletedAt: new Date() }, { where: { id } });
     return true;
   }
 
   async getOrCreate(userId, targetUserId) {
+    // Tìm tất cả conversation có 2 người (userId và targetUserId)
     const conversations = await Conversation.findAll({
       include: [
         {
           model: UserConversation,
           as: 'participants',
           where: {
-            user_id: { [Op.in]: [userId, targetUserId] },
+            userId: {
+              [Op.in]: [userId, targetUserId],
+            },
           },
-          attributes: ['user_id'],
+          attributes: ['userId', 'status'], // Lấy thêm trường status
         },
       ],
     });
 
     for (const convo of conversations) {
-      const userIds = convo.participants.map((p) => p.user_id);
+      const participants = convo.participants;
+      const userIds = participants.map((p) => p.userId);
+
       const isSamePair =
         userIds.includes(userId) &&
         userIds.includes(targetUserId) &&
         userIds.length === 2;
 
-      if (isSamePair) return convo;
+      if (isSamePair) {
+        // Lấy tin nhắn cuối cùng trong conversation
+        const lastMessage = await Message.findOne({
+          where: { conversationId: convo.id },
+          order: [['createdAt', 'DESC']],
+          attributes: ['id', 'content', 'type', 'createdAt'],
+        });
+
+        // Đếm số tin nhắn chưa đọc
+        const [result] = await sequelize.query(
+          `
+        SELECT COUNT(*) AS unreadCount
+        FROM messages m
+        WHERE m.conversation_id = :conversationId
+          AND m.user_id != :userId
+          AND NOT EXISTS (
+            SELECT 1 FROM message_reads mr
+            WHERE mr.message_id = m.id AND mr.user_id = :userId
+          )
+        `,
+          {
+            replacements: { conversationId: convo.id, userId },
+            type: Sequelize.QueryTypes.SELECT,
+          }
+        );
+
+        const unreadCount = parseInt(result.unreadCount, 10);
+
+        // Lấy status của userId trong conversation
+        const userParticipant = participants.find((p) => p.userId === userId);
+        const status = userParticipant?.status || 'unknown';
+
+        return {
+          ...convo.toJSON(),
+          lastMessage,
+          unreadCount,
+          status,
+        };
+      }
     }
 
-    return await this.create(userId, [targetUserId]);
+    // Nếu chưa có conversation, tạo mới
+    const newConvo = await Conversation.create();
+
+    // Tạo participants với status mặc định (ví dụ 'pending')
+    await UserConversation.bulkCreate([
+      { conversationId: newConvo.id, userId, status: 'accepted' },
+      { conversationId: newConvo.id, userId: targetUserId, status: 'pending' },
+    ]);
+
+    const other = await User.findByPk(targetUserId);
+
+    return {
+      ...newConvo.toJSON(),
+      participants: [
+        { userId, status: 'pending' },
+        { userId: targetUserId, status: 'pending' },
+      ],
+      name: other.name,
+      username: other.username,
+      avatar: other.avatar,
+      lastMessage: null,
+      unreadCount: 0,
+      status: 'pending',
+    };
   }
 
   async markedRead(userId, conversationId, messageId = null, readAt = null) {
     const [record, created] = await MessageRead.findOrCreate({
-      where: { user_id: userId, conversation_id: conversationId },
+      where: { userId: userId, conversationId: conversationId },
       defaults: {
-        message_id: messageId,
-        read_at: readAt,
+        messageId: messageId,
+        readAt: readAt,
       },
     });
 
     if (!created) {
-      if (record.message_id === null || record.message_id < messageId) {
+      if (record.messageId === null || record.messageId < messageId) {
         await record.update({
-          message_id: messageId,
-          read_at: readAt,
+          messageId: messageId,
+          readAt: readAt,
         });
       }
+    }
+  }
+
+  async setStatus(userId, conversationId, status) {
+    try {
+      await UserConversation.update(
+        { status: status },
+        { where: { userId, conversationId } }
+      );
+      return;
+    } catch (err) {
+      console.log(err);
+      return;
     }
   }
 }
 
 module.exports = new ConversationService();
+
+// {
+//     id: 1,
+//     avatar:
+//       'https://maunailxinh.com/wp-content/uploads/2025/05/anh-meo-ngao-cute-1.jpg',
+//     name: 'Hello',
+//     unreadCount: 2,
+//     acceptMessages: true,
+//     lastMessage: {
+//       id: 2,
+//       content: 'Đã chấp nhận yêu cầu nhắn tin. Bạn có thể bắt đầu trò chuyện.',
+//       type: 'system',
+//       createdAt: '2025-08-12 18:02:00.956',
+//     },
+//   },
+
+// {
+//   "isGroup": false,
+//   "acceptMessages": false,
+//   "id": 6,
+//   "name": null,
+//   "updatedAt": "2025-10-18T13:17:32.257Z",
+//   "createdAt": "2025-10-18T13:17:32.257Z"
+// }
+
+// {
+//   "id": 6,
+//   "avatar": null,
+//   "name": null,
+//   "isGroup": false,
+//   "acceptMessages": false,
+//   "createdAt": "2025-10-18T13:17:32.000Z",
+//   "updatedAt": "2025-10-18T13:17:32.000Z",
+//   "deletedAt": null,
+//   "participants": [
+//     {
+//       "userId": 32
+//     },
+//     {
+//       "userId": 773
+//     }
+//   ]
+// }

@@ -5,25 +5,27 @@ const getAllNotify = async (req, res) => {
   const currentUserId = req.user?.id;
   const { page, limit } = req;
   try {
-    const notification = await notificationService.getAllNotify(
+    const notifications = await notificationService.getAllNotify(
       page,
       limit,
       currentUserId
     );
-    return response.success(res, 200, notification);
+    return response.success(res, 200, notifications);
   } catch (error) {
     return response.error(res, 404, error);
   }
 };
 
-const getNotify = async (req, res) => {
-  const currentUserId = req.user?.id;
+const getAllNotifyByType = async (req, res) => {
+  const userId = req.user?.id;
+  const type = req.params.type;
   const { page, limit } = req;
   try {
-    const notification = await notificationService.getAllNotify(
+    const notification = await notificationService.getAllNotifyByType(
       page,
       limit,
-      currentUserId
+      userId,
+      type
     );
     return response.success(res, 200, notification);
   } catch (error) {
@@ -54,4 +56,4 @@ const readAll = async (req, res) => {
   }
 };
 
-module.exports = { getAllNotify, update, readAll, getNotify };
+module.exports = { getAllNotify, update, readAll, getAllNotifyByType };

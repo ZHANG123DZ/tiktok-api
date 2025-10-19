@@ -2,7 +2,7 @@ module.exports = (sequelize, DataTypes) => {
   const MessageSystem = sequelize.define(
     'MessageSystem',
     {
-      user_id: {
+      userId: {
         type: DataTypes.BIGINT.UNSIGNED,
         allowNull: false,
         references: {
@@ -11,8 +11,9 @@ module.exports = (sequelize, DataTypes) => {
         },
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE',
+        field: 'user_id',
       },
-      conversation_id: {
+      conversationId: {
         type: DataTypes.BIGINT.UNSIGNED,
         allowNull: false,
         references: {
@@ -21,8 +22,9 @@ module.exports = (sequelize, DataTypes) => {
         },
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE',
+        field: 'conversation_id',
       },
-      parent_id: {
+      parentId: {
         type: DataTypes.BIGINT.UNSIGNED,
         allowNull: true,
         references: {
@@ -32,6 +34,7 @@ module.exports = (sequelize, DataTypes) => {
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE',
         defaultValue: null,
+        field: 'parent_id',
       },
       content: {
         type: DataTypes.TEXT,
@@ -57,16 +60,16 @@ module.exports = (sequelize, DataTypes) => {
   );
   MessageSystem.associate = (db) => {
     MessageSystem.belongsTo(db.User, {
-      foreignKey: 'user_id',
+      foreignKey: 'userId',
       as: 'sender',
     });
 
     MessageSystem.belongsTo(db.Conversation, {
-      foreignKey: 'conversation_id',
+      foreignKey: 'conversationId',
       as: 'conversation',
     });
     MessageSystem.hasMany(db.MessageRead, {
-      foreignKey: 'message_id',
+      foreignKey: 'messageId',
       as: 'reads',
     });
   };
