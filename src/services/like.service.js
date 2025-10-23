@@ -1,5 +1,6 @@
+const checkPostInteractions = require('@/helper/checkPostInteractions');
 const incrementField = require('@/helper/incrementField');
-const { Like, User, Post, Sequelize, sequelize } = require('@/models/index');
+const { Like, User, Post, Comment } = require('@/models/index');
 const { getLikeTargetByType } = require('@/utils/likeTarget');
 
 class LikesService {
@@ -35,6 +36,7 @@ class LikesService {
         likeAbleType: type,
       },
       attributes: ['likeAbleId'],
+      order: [['createdAt', 'DESC']],
     });
 
     const ids = items.map((f) => f.likeAbleId);
@@ -42,18 +44,54 @@ class LikesService {
       return { data: [], total };
     }
 
-    const users = await Model.findAll({
+    const posts = await Model.findAll({
       where: { id: ids },
-      attributes,
+      attributes: [
+        'id',
+        'title',
+        'content',
+        'thumbnail',
+        'status',
+        'authorId',
+        'authorName',
+        'authorAvatar',
+        'authorUserName',
+        'createdAt',
+        'viewCount',
+        'likeCount',
+        'publishedAt',
+      ],
+      distinct: true,
     });
-    return { users, total };
+
+    const orderedPosts = ids
+      .map((id) => posts.find((p) => p.id === id))
+      .filter(Boolean);
+    const postItems = orderedPosts.map((post) => {
+      const plain = post.get({ plain: true });
+
+      plain.author = {
+        id: plain.authorId,
+        avatar: plain.authorAvatar,
+        username: plain.authorUserName,
+        name: plain.authorName,
+      };
+
+      delete plain.authorId;
+      delete plain.authorAvatar;
+      delete plain.authorUserName;
+      delete plain.authorName;
+
+      return plain;
+    });
+
+    return { posts: postItems, total };
   }
 
   async like(userId, type, likeAbleId) {
     const { model: Model, attributes } = getLikeTargetByType(type);
-    const user = await User.findOne({ where: { id: userId } });
     const targetLike = await Model.findOne({ where: { id: likeAbleId } });
-    if (!targetLike || !user) return false;
+    if (!targetLike) return false;
 
     const where = {
       userId,
@@ -99,6 +137,7 @@ class LikesService {
       where: where,
     });
     await incrementField(Model, 'like_count', -1, { id: likeAbleId });
+
     if (Model === Post) {
       const post = await Post.findByPk(likeAbleId);
       if (post) {

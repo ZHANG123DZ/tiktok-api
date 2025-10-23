@@ -47,7 +47,9 @@ const show = async (req, res) => {
 
 const store = async (req, res) => {
   const user = req.user;
-  const post = await postService.create(req.body, user);
+  const { content, thumbnail, title, description } = req.body;
+  const data = { content, thumbnail, title, description };
+  const post = await postService.create(data, user);
   response.success(res, 201, post);
 };
 

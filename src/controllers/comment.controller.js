@@ -44,8 +44,8 @@ const update = async (req, res) => {
 };
 
 const destroy = async (req, res) => {
-  const id = req.params.id;
-  const result = await commentsService.remove(id);
+  const { id, postId } = req.params;
+  const result = await commentsService.remove(id, postId);
 
   if (!result) throwError(404, 'Not Found.');
 

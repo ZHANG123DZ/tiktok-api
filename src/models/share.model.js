@@ -44,7 +44,7 @@ module.exports = (sequelize, DataTypes) => {
   );
   Share.associate = (db) => {
     Share.belongsTo(db.User, {
-      foreignKey: 'user_id',
+      foreignKey: 'userId',
       as: 'shareAuthor',
     });
   };

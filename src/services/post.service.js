@@ -1,3 +1,4 @@
+const { setupElasticPost } = require('@/function/elasticSetup');
 const checkFollowManyUsers = require('@/helper/checkFollowManyUsers');
 const checkPostInteractions = require('@/helper/checkPostInteractions');
 const incrementField = require('@/helper/incrementField');
@@ -10,6 +11,7 @@ const {
   User,
   Music,
   Sequelize,
+  sequelize,
 } = require('@/models/index');
 const { nanoid } = require('nanoid');
 const { where, Op } = require('sequelize');
@@ -260,24 +262,40 @@ class PostsService {
     const toSlug = (title) => {
       return `${slugify(title, { lower: true, strict: true })}-${nanoid(6)}`;
     };
+
     if (!data.slug) {
       data.slug = toSlug(data.title);
     }
+
     data.authorId = user.id;
     data.authorName = user.name;
     data.authorUserName = user.username;
     data.authorAvatar = user.avatar;
 
+    // 1️⃣ Tạo bài viết
     const post = await Post.create(data);
-    await Promise.all(
-      data.topics.map((id) =>
+
+    // 2️⃣ Gắn topic và tag song song
+    await Promise.all([
+      ...(data.topics?.map((id) =>
         PostTopic.create({ postId: post.id, topicId: id })
-      )
-    );
-    await incrementField(User, 'post_count', +1, { id: user.id });
-    await incrementField(Topic, 'post_count', +1, {
-      id: { [Op.in]: data.topics },
-    });
+      ) || []),
+      ...(data.tags?.map((id) =>
+        PostTag.create({ postId: post.id, tagId: id })
+      ) || []),
+    ]);
+
+    // 3️⃣ Cập nhật đếm (ngoài transaction)
+    await Promise.all([
+      incrementField(User, 'post_count', +1, { id: user.id }),
+      incrementField(Topic, 'post_count', +1, {
+        id: { [Op.in]: data.topics || [] },
+      }),
+      incrementField(Tag, 'post_count', +1, {
+        id: { [Op.in]: data.tags || [] },
+      }),
+    ]);
+    await setupElasticPost(data);
     return post;
   }
 

@@ -49,7 +49,7 @@ class UsersService {
     const offset = (page - 1) * limit;
     const { rows: posts, count: total } = await Post.findAndCountAll({
       where: { authorId: user.id },
-      order: [['createdAt', 'DESC']],
+      order: [['createdAt', 'ASC']],
       limit,
       offset,
       attributes: [
@@ -87,6 +87,7 @@ class UsersService {
       const plain = post.get({ plain: true });
       const { isLiked, isBookMarked } = interactions.get(post.id) || {};
       plain.author = {
+        id: plain.authorId,
         avatar: plain.authorAvatar,
         username: plain.authorUserName,
         name: plain.authorName,

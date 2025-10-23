@@ -35,12 +35,12 @@ module.exports = (sequelize, DataTypes) => {
   );
   Tag.associate = (db) => {
     Tag.hasMany(db.PostTag, {
-      foreignKey: 'tag_id',
+      foreignKey: 'tagId',
       as: 'postTags',
     });
     Tag.belongsToMany(db.Post, {
       through: db.PostTag,
-      foreignKey: 'tag_id',
+      foreignKey: 'tagId',
       as: 'posts',
     });
   };

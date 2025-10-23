@@ -28,24 +28,22 @@ module.exports = (sequelize, DataTypes) => {
     {
       tableName: 'reposts',
       timestamps: true,
-      paranoid: true,
       underscored: true,
       charset: 'utf8',
       collate: 'utf8_general_ci',
       engine: 'InnoDB',
       createdAt: 'createdAt',
       updatedAt: 'updatedAt',
-      deletedAt: 'deletedAt',
     }
   );
 
   Repost.associate = (db) => {
     Repost.belongsTo(db.User, {
-      foreignKey: 'user_id',
+      foreignKey: 'userId',
       as: 'user',
     });
     Repost.belongsTo(db.Post, {
-      foreignKey: 'post_id',
+      foreignKey: 'postId',
       as: 'post',
     });
   };

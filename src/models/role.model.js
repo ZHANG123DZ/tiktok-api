@@ -31,21 +31,21 @@ module.exports = (sequelize, DataTypes) => {
   Role.associate = (db) => {
     Role.belongsToMany(db.User, {
       through: db.UserRole,
-      foreignKey: 'role_id',
-      otherKey: 'user_id',
+      foreignKey: 'roleId',
+      otherKey: 'userId',
       as: 'users',
     });
 
     Role.belongsToMany(db.Permission, {
       through: db.RolePermission,
-      foreignKey: 'role_id',
-      otherKey: 'permission_id',
+      foreignKey: 'roleId',
+      otherKey: 'permissionId',
       as: 'permissions',
     });
 
-    Role.hasMany(db.UserRole, { foreignKey: 'role_id', as: 'userRoles' });
+    Role.hasMany(db.UserRole, { foreignKey: 'roleId', as: 'userRoles' });
     Role.hasMany(db.RolePermission, {
-      foreignKey: 'role_id',
+      foreignKey: 'roleId',
       as: 'rolePermissions',
     });
   };

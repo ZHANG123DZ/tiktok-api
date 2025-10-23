@@ -12,6 +12,7 @@ const generateUsername = require('@/utils/generateUsername');
 const refreshToken = require('@/utils/refreshToken');
 const toDate = require('@/utils/toDate');
 const getExpiry = require('@/utils/getExpiry');
+const { setupElasticUser } = require('@/function/elasticSetup');
 
 class authService {
   async auth(token) {
@@ -98,6 +99,7 @@ class authService {
 
     const auth = await User.create(data);
     await UserSetting.create({ userId: auth.dataValues.id });
+    await setupElasticUser(data);
     return auth.dataValues;
   }
 

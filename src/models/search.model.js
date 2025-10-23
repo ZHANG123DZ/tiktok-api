@@ -20,7 +20,7 @@ module.exports = (sequelize, DataTypes) => {
       },
     },
     {
-      tableName: 'searchs',
+      tableName: 'searches',
       timestamps: true,
       paranoid: true,
       underscored: true,
@@ -30,11 +30,17 @@ module.exports = (sequelize, DataTypes) => {
       createdAt: 'createdAt',
       updatedAt: 'updatedAt',
       deletedAt: 'deletedAt',
+      indexes: [
+        {
+          unique: true,
+          fields: ['userId', 'keyword'],
+        },
+      ],
     }
   );
   Search.associate = (db) => {
     Search.belongsTo(db.User, {
-      foreignKey: 'user_id',
+      foreignKey: 'userId',
       as: 'searchAuthor',
     });
   };

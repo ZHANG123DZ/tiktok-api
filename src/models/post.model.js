@@ -30,7 +30,7 @@ module.exports = (sequelize, DataTypes) => {
       },
       musicId: {
         type: DataTypes.BIGINT.UNSIGNED,
-        allowNull: false,
+        allowNull: true,
         references: {
           model: 'musics',
           key: 'id',
@@ -118,12 +118,12 @@ module.exports = (sequelize, DataTypes) => {
         defaultValue: 0,
         field: 'report_count',
       },
-      // repostCount: {
-      //   type: DataTypes.BIGINT.UNSIGNED,
-      //   allowNull: true,
-      //   defaultValue: 0,
-      //   field: 'repost_count',
-      // },
+      repostCount: {
+        type: DataTypes.BIGINT.UNSIGNED,
+        allowNull: true,
+        defaultValue: 0,
+        field: 'repost_count',
+      },
       diggCount: {
         type: DataTypes.BIGINT.UNSIGNED,
         allowNull: true,

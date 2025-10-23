@@ -1,7 +1,8 @@
 const elastic = require('@/configs/elastics');
 const checkFollowManyUsers = require('@/helper/checkFollowManyUsers');
 const checkPostInteractions = require('@/helper/checkPostInteractions');
-const { Post, User, Tag } = require('@/models/index');
+const { Post, User, Tag, Search } = require('@/models/index');
+const { Op } = require('sequelize');
 
 async function searchAll(query, userId) {
   const res = await elastic.search({
@@ -124,42 +125,17 @@ async function searchAll(query, userId) {
   };
 }
 
-// async function suggestion(input, size = 10) {
-//   if (!input || typeof input !== 'string') return [];
-
-//   try {
-//     const result = await elastic.search({
-//       index: 'suggestions',
-//       size,
-//       query: {
-//         match_phrase_prefix: {
-//           term: {
-//             query: input,
-//             slop: 1,
-//           },
-//         },
-//       },
-//     });
-
-//     const suggestions = result.hits.hits.map((hit) => hit._source.term);
-//     return [...new Set(suggestions)];
-//   } catch (err) {
-//     console.error('❌ Suggestion search failed:', err);
-//     return [];
-//   }
-// }
-
 async function suggestion(prefix) {
   const result = await elastic.search({
     index: 'suggestions',
     body: {
       suggest: {
-        phrase_suggest: {
-          prefix, // ví dụ: 'cach hoc'
+        term_suggest: {
+          prefix,
           completion: {
             field: 'term',
             fuzzy: {
-              fuzziness: 1, // cho phép sai 1 ký tự
+              fuzziness: 1,
             },
             size: 10,
           },
@@ -168,9 +144,7 @@ async function suggestion(prefix) {
     },
   });
 
-  return result.suggest.phrase_suggest[0].options
-    .map((opt) => opt.text)
-    .reverse();
+  return result.suggest.term_suggest[0].options.map((opt) => opt.text);
 }
 
 async function searchUsers(query) {
@@ -203,4 +177,84 @@ async function searchUsers(query) {
   // return rows;
 }
 
-module.exports = { searchAll, searchUsers, suggestion };
+async function getHistory(userId) {
+  const results = await Search.findAll({
+    where: {
+      userId,
+      deletedAt: { [Op.is]: null },
+    },
+    attributes: ['id', 'keyword'],
+    order: [['createdAt', 'DESC']],
+  });
+
+  return results;
+}
+
+async function getOne(id, userId) {
+  return Search.findOne({
+    where: { id, userId, deletedAt: { [Op.is]: null } },
+  });
+}
+
+async function create(userId, data) {
+  // Kiểm tra keyword đã tồn tại chưa
+  const existing = await Search.findOne({
+    where: {
+      userId,
+      keyword: data.keyword,
+      deletedAt: null,
+    },
+  });
+
+  if (existing) {
+    return;
+  }
+
+  await Search.create({
+    userId,
+    keyword: data.keyword,
+  });
+  return;
+}
+
+// async function update(id, userId, data) {
+//   const search = await Search.getOne(id, userId);
+//   if (!search) return null;
+//   await search.update(data);
+//   return search;
+// }
+
+async function softDelete(id, userId) {
+  const search = await Search.findOne({
+    where: {
+      id,
+      userId,
+      deletedAt: { [Op.is]: null },
+    },
+  });
+
+  if (!search) return null;
+
+  await search.destroy();
+  return search;
+}
+
+async function clearAll(userId) {
+  const affectedRows = await Search.destroy({
+    where: {
+      userId,
+    },
+  });
+  return affectedRows;
+}
+
+module.exports = {
+  searchAll,
+  searchUsers,
+  suggestion,
+  getHistory,
+  getOne,
+  create,
+  softDelete,
+  clearAll,
+};

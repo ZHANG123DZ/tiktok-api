@@ -1,10 +1,11 @@
 const pusher = require('@/configs/pusher');
+const checkFollowManyUsers = require('@/helper/checkFollowManyUsers');
 const incrementField = require('@/helper/incrementField');
-const { Follow, User, Post, Notification } = require('@/models/index');
+const { Follow, User, Friend, Notification } = require('@/models/index');
 const { getFollowTargetByType } = require('@/utils/followTarget');
 
 class FollowsService {
-  async getFollowers(type, followAbleId) {
+  async getFollowers(type, followAbleId, userId) {
     getFollowTargetByType(type);
 
     const { rows: items, count: total } = await Follow.findAndCountAll({
@@ -17,14 +18,24 @@ class FollowsService {
 
     const ids = items.map((f) => f.userId);
     if (ids.length === 0) {
-      return { data: [], total };
+      return { users: [], total };
     }
 
     const users = await User.findAll({
       where: { id: ids },
       attributes: ['id', 'username', 'avatar', 'name'],
     });
-    return { users, total };
+    const userIds = users.map((u) => u.id);
+
+    const followMap = await checkFollowManyUsers(userId, userIds);
+
+    const data = users.map((u) => {
+      const plain = u.get({ plain: true });
+      plain.isFollow = followMap.get(u.id) || false;
+      return plain;
+    });
+
+    return { users: data, total };
   }
 
   async getFollowing(userId, type) {
@@ -40,7 +51,7 @@ class FollowsService {
 
     const ids = items.map((f) => f.followAbleId);
     if (ids.length === 0) {
-      return { data: [], total };
+      return { users: [], total };
     }
 
     const users = await Model.findAll({
@@ -71,6 +82,7 @@ class FollowsService {
     }
     await Follow.create(where);
     await incrementField(Model, 'follower_count', +1, { id: followAbleId });
+    await incrementField(Model, 'following_count', +1, { id: userId });
     const notify = await Notification.create({
       type: 'follow',
       userId: followAbleId,
@@ -84,6 +96,21 @@ class FollowsService {
       'new-notification',
       notify
     );
+
+    //Friend
+    if (Model === User) {
+      const isFollow = await Follow.findOne({
+        where: {
+          userId: followAbleId,
+          followAbleType: type,
+          followAbleId: userId,
+        },
+      });
+      if (isFollow) {
+        await Friend.create({ userId, friendId: followAbleId });
+        await Friend.create({ userId: followAbleId, friendId: userId });
+      }
+    }
     return true;
   }
 
@@ -103,6 +130,9 @@ class FollowsService {
       where: where,
     });
     await incrementField(Model, 'follower_count', -1, { id: followAbleId });
+    await incrementField(Model, 'following_count', -1, { id: userId });
+    await Friend.destroy({ where: { userId, friendId: followAbleId } });
+    await Friend.destroy({ where: { userId: followAbleId, friendId: userId } });
     return;
   }
 

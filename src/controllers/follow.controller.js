@@ -4,9 +4,10 @@ const response = require('@/utils/response');
 const getFollowers = async (req, res) => {
   const { type, id } = req.params;
   const { page, limit } = req;
+  const userId = req.user?.id;
 
   try {
-    const results = await followsService.getFollowers(type, id);
+    const results = await followsService.getFollowers(type, id, userId);
     return response.success(res, 200, results);
   } catch (error) {
     console.log(error);

@@ -197,14 +197,13 @@ class CommentsService {
     return comment;
   }
 
-  async remove(id) {
+  async remove(id, postId) {
     try {
-      const comment = await Comment.findByPk(id);
-      await Comment.destroy({ where: { parentId: id } });
-      await Comment.destroy({ where: { id } });
-      await incrementField(Post, 'comment_count', -1, { id: comment.postId });
-      pusher.trigger(`post-${comment.postId}-comments`, 'delete-comment', id);
-      return comment;
+      await Comment.destroy({ where: { parentId: id, postId } });
+      await Comment.destroy({ where: { id, postId } });
+      await incrementField(Post, 'comment_count', -1, { id: postId });
+      pusher.trigger(`post-${postId}-comments`, 'delete-comment', id);
+      return;
     } catch (err) {
       console.log(err);
       return;

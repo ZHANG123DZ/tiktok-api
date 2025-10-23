@@ -19,6 +19,7 @@ const tagRouter = require('./tag.route');
 const searchRouter = require('./search.route');
 const translateRouter = require('./translate.route');
 const broadcastingRouter = require('./broadcasting.route');
+const repostRouter = require('./repost.route');
 const auth = require('@/middlewares/auth');
 
 router.use('/broadcasting', broadcastingRouter);
@@ -31,6 +32,7 @@ router.use('/follows', followRouter);
 router.use('/notifications', auth, notificationRouter);
 router.use('/likes', likeRouter);
 router.use('/book-marks', bookmarkRouter);
+router.use('/reposts', repostRouter);
 router.use('/media', mediaRouter);
 router.use('/upload', uploadRouter);
 router.use('/conversations/:conversationId/messages', messagesRouter);

@@ -100,7 +100,7 @@ class MessageService {
 
   async create({ conversationId, userId, content, type, parentId }) {
     await this.checkAccess(conversationId, userId);
-
+    console.log(parentId);
     // Tạo tin nhắn mới
     const message = await Message.create({
       conversationId,
@@ -121,7 +121,36 @@ class MessageService {
     const sender = await User.findByPk(userId, {
       attributes: ['name', 'username', 'avatar', 'createdAt'],
     });
+    let parentMes = null;
 
+    if (message.parentId) {
+      const parentMessage = await Message.findByPk(message.parentId, {
+        include: [
+          {
+            model: User,
+            as: 'sender',
+            attributes: ['id', 'name', 'username', 'avatar', 'createdAt'],
+          },
+        ],
+      });
+
+      if (parentMessage) {
+        const plain = parentMessage.toJSON();
+
+        parentMes = {
+          id: plain.id,
+          content: plain.content,
+          type: plain.type,
+          isOwnMessage: plain.sender.id === userId,
+          author: {
+            name: plain.sender.name,
+            username: plain.sender.username,
+            avatar: plain.sender.avatar,
+            createdAt: plain.sender.createdAt,
+          },
+        };
+      }
+    }
     // Định dạng lại dữ liệu gửi qua Pusher
     const payload = {
       id: message.id,
@@ -133,6 +162,7 @@ class MessageService {
         avatar: sender.avatar,
         createdAt: sender.createdAt,
       },
+      replyTo: parentMes,
       reactions: message.reactions || [], // vì là JSON field
     };
 
