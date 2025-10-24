@@ -34,8 +34,8 @@ class UsersService {
         'createdAt',
       ],
     });
-    const isFollow = await checkFollowManyUsers(userId, [user.dataValues?.id]);
-    user.dataValues.isFollow = isFollow.get(user.dataValues?.id);
+    const isFollow = await checkFollowManyUsers(userId, [user.id]);
+    user.dataValues.isFollow = isFollow.get(user.id) || false;
     return user;
   }
 

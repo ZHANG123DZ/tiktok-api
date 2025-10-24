@@ -50,5 +50,13 @@ module.exports = (sequelize, DataTypes) => {
       as: 'postsFollowing',
     });
   };
+  Follow.beforeCreate(async (follow, options) => {
+    if (
+      follow.followAbleType === 'User' &&
+      follow.userId === follow.followAbleId
+    ) {
+      throw new Error("You can't follow yourself.");
+    }
+  });
   return Follow;
 };

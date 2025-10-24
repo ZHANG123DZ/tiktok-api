@@ -235,7 +235,7 @@ class PostsService {
 
     const interactions = await checkPostInteractions([post.id], userId);
     const { isLiked, isBookMarked } = interactions.get(post.id) || {};
-
+    const follows = await checkFollowManyUsers(userId, [post.authorId]);
     let plainPost = post.toJSON();
 
     plainPost = {
@@ -245,6 +245,8 @@ class PostsService {
         id: plainPost.authorId,
         avatar: plainPost.authorAvatar ?? plainPost.author?.avatar,
         username: plainPost.authorUserName ?? plainPost.author?.username,
+        isFollow:
+          follows.get(plainPost.authorId) || false,
       },
       tags: plainPost.tags.map((tag) => tag.name),
       isLiked,
