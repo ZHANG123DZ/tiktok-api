@@ -118,7 +118,7 @@ const social = async (req, res) => {
         qs.stringify({
           client_id: process.env.GOOGLE_CLIENT_ID,
           client_secret: process.env.GOOGLE_CLIENT_SECRET,
-          redirect_uri: 'http://localhost:5173',
+          redirect_uri: 'https://tiktokk.website:5173',
           grant_type: 'authorization_code',
           code,
         }),
