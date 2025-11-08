@@ -56,6 +56,7 @@ class LikesService {
         'authorName',
         'authorAvatar',
         'authorUserName',
+        'commentCount',
         'createdAt',
         'viewCount',
         'likeCount',

@@ -207,17 +207,17 @@ class authService {
     return code.dataValues;
   }
 
-  async verifyCode({ target, action, code }) {
+  async verifyCode({ email, action, code }) {
     const record = await VerificationCode.findOne({
       where: {
-        target,
+        target: email,
         action,
         code,
         expiresAt: {
           [Op.gt]: new Date(),
         },
       },
-      order: [['createdAt', 'DESC']],
+      order: [['created_at', 'DESC']],
     });
 
     if (!record) throw new Error('Mã không hợp lệ');

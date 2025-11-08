@@ -66,6 +66,7 @@ class UsersService {
         'createdAt',
         'viewCount',
         'likeCount',
+        'commentCount',
         'isPinned',
         'isFeatured',
         'publishedAt',

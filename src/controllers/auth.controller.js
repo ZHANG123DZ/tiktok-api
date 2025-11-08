@@ -119,7 +119,7 @@ const social = async (req, res) => {
         qs.stringify({
           client_id: process.env.GOOGLE_CLIENT_ID,
           client_secret: process.env.GOOGLE_CLIENT_SECRET,
-          redirect_uri: process.env.GOOGLE_REDIRECT_URI,
+          redirect_uri: String(process.env.GOOGLE_REDIRECT_URI),
           grant_type: 'authorization_code',
           code,
         }),
@@ -142,7 +142,7 @@ const social = async (req, res) => {
           params: {
             client_id: process.env.FACEBOOK_APP_ID,
             client_secret: process.env.FACEBOOK_APP_SECRET,
-            redirect_uri: 'http://localhost:5173',
+            redirect_uri: process.env.FACEBOOK_REDIRECT_URI,
             code,
           },
         }
@@ -325,9 +325,9 @@ const sendCode = async (req, res) => {
 
 const verifyCode = async (req, res) => {
   const { email, phone, action, code } = req.body;
-  const target = email || phone;
+
   try {
-    await authService.verifyCode({ target, action, code });
+    await authService.verifyCode({ email, action, code });
     response.success(res, 200);
   } catch (error) {
     response.error(res, 401, error);

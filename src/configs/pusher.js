@@ -6,7 +6,7 @@ const pusher = new Pusher({
   key: process.env.SOKETI_KEY,
   secret: process.env.SOKETI_SECRET,
   cluster: '',
-  host: '103.20.96.114',
+  host: process.env.SOKETI_PORT,
   port: 6001,
   useTLS: false,
 });
