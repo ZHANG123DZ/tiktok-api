@@ -75,6 +75,172 @@ class PostsService {
 
     return { items, total };
   }
+  async GetFollowingPosts(page, limit, userId) {
+    try {
+      const offset = (page - 1) * limit;
+
+      const followedPosts = await sequelize.query(
+        `
+    SELECT posts.id
+    FROM follows
+    INNER JOIN posts ON follows.follow_able_id = posts.author_id
+    WHERE follows.user_id = :userId
+    ORDER BY posts.created_at DESC
+    LIMIT :limit OFFSET :offset
+    `,
+        {
+          replacements: { userId, limit, offset },
+          type: sequelize.QueryTypes.SELECT,
+        }
+      );
+
+      if (!followedPosts.length) {
+        return { items: [], total: 0 };
+      }
+
+      const postIds = followedPosts.map((p) => p.id);
+
+      const { rows: posts, count: total } = await Post.findAndCountAll({
+        where: { id: postIds },
+        include: [
+          {
+            model: Tag,
+            as: 'tags',
+            attributes: ['id', 'name', 'slug'],
+            through: { attributes: [] },
+          },
+          {
+            model: Music,
+            as: 'music',
+            attributes: ['id', 'audio', 'title', 'slug', 'thumbnail'],
+            include: [{ model: User, as: 'author', attributes: ['name'] }],
+          },
+        ],
+
+        order: [[sequelize.literal(`FIELD(Post.id, ${postIds.join(',')})`)]],
+      });
+
+      const authorIds = posts.map((p) => p.authorId);
+      const interactions = await checkPostInteractions(postIds, userId);
+      const follows = await checkFollowManyUsers(userId, authorIds);
+
+      const items = posts.map((post) => {
+        const plain = post.get({ plain: true });
+
+        plain.author = {
+          id: plain.authorId,
+          username: plain.authorUserName,
+          name: plain.authorName,
+          avatar: plain.authorAvatar,
+          isFollow: follows.get(plain.authorId) || false,
+        };
+
+        plain.tags = plain.tags.map((tag) => tag.name);
+
+        delete plain.authorId;
+        delete plain.authorUserName;
+        delete plain.authorName;
+        delete plain.authorAvatar;
+
+        const { isLiked, isBookMarked } = interactions.get(post.id) || {};
+        plain.isLiked = isLiked || false;
+        plain.isBookMarked = isBookMarked || false;
+
+        return plain;
+      });
+
+      return { items, total };
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  async GetFriendsPosts(page, limit, userId) {
+    const offset = (page - 1) * limit;
+
+    const followedPosts = await sequelize.query(
+      `
+    SELECT DISTINCT p.*
+FROM posts p
+INNER JOIN friends f
+    ON (
+        (f.user_id = :userId AND f.friend_id = p.author_id)
+        OR
+        (f.friend_id = :userId AND f.user_id = p.author_id)
+    )
+ORDER BY p.created_at DESC
+LIMIT :limit OFFSET :offset;
+
+    `,
+      {
+        replacements: { userId, limit, offset },
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+
+    // 2️⃣ Nếu không có post nào thì trả về luôn
+    if (!followedPosts.length) {
+      return { items: [], total: 0 };
+    }
+
+    // Lấy danh sách ID bài viết
+    const postIds = followedPosts.map((p) => p.id);
+
+    // 3️⃣ Truy vấn chi tiết bài viết bằng Sequelize ORM
+    const { rows: posts, count: total } = await Post.findAndCountAll({
+      where: { id: postIds },
+      include: [
+        {
+          model: Tag,
+          as: 'tags',
+          attributes: ['id', 'name', 'slug'],
+          through: { attributes: [] },
+        },
+        {
+          model: Music,
+          as: 'music',
+          attributes: ['id', 'audio', 'title', 'slug', 'thumbnail'],
+          include: [{ model: User, as: 'author', attributes: ['name'] }],
+        },
+      ],
+      // Giữ nguyên thứ tự theo kết quả truy vấn SQL
+      order: [[sequelize.literal(`FIELD(Post.id, ${postIds.join(',')})`)]],
+    });
+
+    // 4️⃣ Chuẩn bị dữ liệu tương tác và follow
+    const authorIds = posts.map((p) => p.authorId);
+    const interactions = await checkPostInteractions(postIds, userId);
+    const follows = await checkFollowManyUsers(userId, authorIds);
+
+    // 5️⃣ Chuẩn hóa dữ liệu trả về
+    const items = posts.map((post) => {
+      const plain = post.get({ plain: true });
+
+      plain.author = {
+        id: plain.authorId,
+        username: plain.authorUserName,
+        name: plain.authorName,
+        avatar: plain.authorAvatar,
+        isFollow: follows.get(plain.authorId) || false,
+      };
+
+      plain.tags = plain.tags.map((tag) => tag.name);
+
+      delete plain.authorId;
+      delete plain.authorUserName;
+      delete plain.authorName;
+      delete plain.authorAvatar;
+
+      const { isLiked, isBookMarked } = interactions.get(post.id) || {};
+      plain.isLiked = isLiked || false;
+      plain.isBookMarked = isBookMarked || false;
+
+      return plain;
+    });
+
+    // 6️⃣ Trả kết quả
+    return { items, total };
+  }
   async getTrendingPosts(limit = 10) {
     return await Post.findAll({
       attributes: {
@@ -245,8 +411,7 @@ class PostsService {
         id: plainPost.authorId,
         avatar: plainPost.authorAvatar ?? plainPost.author?.avatar,
         username: plainPost.authorUserName ?? plainPost.author?.username,
-        isFollow:
-          follows.get(plainPost.authorId) || false,
+        isFollow: follows.get(plainPost.authorId) || false,
       },
       tags: plainPost.tags.map((tag) => tag.name),
       isLiked,

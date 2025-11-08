@@ -4,15 +4,13 @@ const express = require('express');
 
 const router = require('@/routes/api');
 const cors = require('cors');
-const { RtcTokenBuilder, RtcRole } = require('agora-access-token');
-
 const notFoundHandler = require('@/middlewares/notFoundHandler');
 const errorsHandler = require('@/middlewares/errorHandler');
 const handlePagination = require('@/middlewares/handlePagination');
 const allowedOrigins = process.env.CLIENT_URL.split(',');
 const cookieParser = require('cookie-parser');
 const auth = require('@/middlewares/auth');
-const { searchAll } = require('@/services/search.service');
+const { default: helmet } = require('helmet');
 const app = express();
 
 //Middleware
@@ -30,11 +28,18 @@ app.use(
   })
 );
 
+app.use(
+  helmet.contentSecurityPolicy({
+    directives: {
+      frameAncestors: ["'self'", allowedOrigins[0]],
+    },
+  })
+);
+
 app.use(express.static('public'));
 app.use(express.json());
 app.use(express.urlencoded());
 app.use(handlePagination);
-
 app.use(auth);
 app.use('/api/v1', router);
 

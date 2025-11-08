@@ -13,14 +13,16 @@ class MessageService {
     if (!exists) throw new Error('Forbidden');
   }
 
-  async getMessages(conversationId, userId, page = 1, limit = 20) {
+  async getMessages(conversationId, userId, cursor = null, limit = 20) {
     await this.checkAccess(conversationId, userId);
 
-    const offset = (page - 1) * limit;
+    const whereClause = { conversationId };
+    if (cursor) {
+      whereClause.id = { [Op.lt]: cursor };
+    }
 
-    // Fetch tin nhắn trong trang hiện tại
     const messages = await Message.findAll({
-      where: { conversationId },
+      where: whereClause,
       include: [
         {
           model: User,
@@ -28,22 +30,19 @@ class MessageService {
           attributes: ['id', 'username', 'name', 'avatar', 'createdAt'],
         },
       ],
-      order: [['created_at', 'ASC']],
+      order: [['created_at', 'DESC']],
       limit,
-      offset,
     });
 
     const plainMessages = messages.map((m) => m.toJSON());
 
-    // Lấy tất cả parentId từ những tin nhắn có trả lời
     const parentIds = plainMessages
       .filter((m) => m.parentId)
       .map((m) => m.parentId);
+    let parentMap = new Map();
 
-    let parents = [];
-    if (parentIds.length > 0) {
-      // Lấy tin nhắn cha (nằm ngoài limit) để hiển thị trong replyTo
-      parents = await Message.findAll({
+    if (parentIds.length) {
+      const parents = await Message.findAll({
         where: { id: parentIds },
         include: [
           {
@@ -53,9 +52,8 @@ class MessageService {
           },
         ],
       });
+      parentMap = new Map(parents.map((p) => [p.id, p.toJSON()]));
     }
-
-    const parentMap = new Map(parents.map((p) => [p.id, p.toJSON()]));
 
     const result = plainMessages.map((msg) => {
       const isOwnMessage = msg.sender.id === userId;
@@ -66,8 +64,9 @@ class MessageService {
         type: msg.type,
         createdAt: msg.created_at,
         isOwnMessage,
-        reactions: JSON.parse(msg.reactions) || [],
+        reactions: JSON.parse(msg.reactions || '[]'),
         author: {
+          id: msg.sender.id,
           name: msg.sender.name,
           username: msg.sender.username,
           avatar: msg.sender.avatar,
@@ -75,7 +74,6 @@ class MessageService {
         },
       };
 
-      // Gắn replyTo nếu có
       if (msg.parentId && parentMap.has(msg.parentId)) {
         const parent = parentMap.get(msg.parentId);
         formatted.replyTo = {
@@ -94,13 +92,20 @@ class MessageService {
 
       return formatted;
     });
-    result.reverse();
-    return result;
+
+    const nextCursor = result.length
+      ? result[result.length - 1].createdAt
+      : null;
+
+    return {
+      data: result,
+      nextCursor,
+    };
   }
 
   async create({ conversationId, userId, content, type, parentId }) {
     await this.checkAccess(conversationId, userId);
-    console.log(parentId);
+
     // Tạo tin nhắn mới
     const message = await Message.create({
       conversationId,

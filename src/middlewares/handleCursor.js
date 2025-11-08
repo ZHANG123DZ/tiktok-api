@@ -1,19 +1,17 @@
 const response = require('@/utils/response');
 const paginationConfig = require('@/configs/pagination');
 
-function handlePagination(req, res, next) {
-  const { default_page, default_limit, max_limit } = paginationConfig;
+function handleCursor(req, res, next) {
+  const { default_cursor, default_limit, max_limit } = paginationConfig;
 
   const page = +req.query.page || default_page;
   let limit = +req.query.limit || default_limit;
-  const cursor = req.query.cursor;
   let maxLimit = max_limit;
 
   if (limit > maxLimit) limit = maxLimit;
 
   req.page = page;
   req.limit = limit;
-  req.cursor = cursor;
 
   res.paginate = ({ items, total }) => {
     response.paginate(res, items, total, page, limit);
@@ -22,4 +20,4 @@ function handlePagination(req, res, next) {
   next();
 }
 
-module.exports = handlePagination;
+module.exports = handleCursor;

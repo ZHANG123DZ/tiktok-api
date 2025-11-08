@@ -6,12 +6,12 @@ const index = async (req, res) => {
   try {
     const conversationId = req.params.conversationId;
     const currentUserId = req.user?.id;
-    const { page, limit } = req;
+    const { limit, cursor } = req;
 
     const messages = await messageService.getMessages(
       conversationId,
       currentUserId,
-      page,
+      cursor === 'null' ? null : cursor,
       limit
     );
 

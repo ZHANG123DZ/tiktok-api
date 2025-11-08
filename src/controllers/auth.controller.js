@@ -1,5 +1,6 @@
 const response = require('@/utils/response');
 const qs = require('qs');
+const crypto = require('crypto');
 const authService = require('@/services/auth.service');
 const { createCookie, readCookie } = require('@/utils/cookie');
 const accessToken = require('@/utils/accessToken');
@@ -118,7 +119,7 @@ const social = async (req, res) => {
         qs.stringify({
           client_id: process.env.GOOGLE_CLIENT_ID,
           client_secret: process.env.GOOGLE_CLIENT_SECRET,
-          redirect_uri: 'https://tiktokk.website:5173',
+          redirect_uri: 'http://localhost:5173',
           grant_type: 'authorization_code',
           code,
         }),
@@ -282,7 +283,8 @@ const settings = async (req, res) => {
 };
 
 const sendCode = async (req, res) => {
-  const { target, ...data } = req.body;
+  const data = req.body;
+  const target = data.target;
   const { method } = req.query;
   const userId = req.user?.id;
   try {
@@ -293,11 +295,26 @@ const sendCode = async (req, res) => {
     } else {
       auth.phone = '+84' + target.slice(1);
     }
-    if (auth.code !== '' && method === 'email') {
+    if (
+      auth.code !== '' &&
+      method === 'email' &&
+      data.action === 'verify_email'
+    ) {
       queue.dispatch('sendEmailCodeJob', auth);
     }
-    if (auth.code !== '' && method === 'phone') {
+    if (
+      auth.code !== '' &&
+      method === 'phone' &&
+      data.action === 'verify_email'
+    ) {
       queue.dispatch('sendPhoneCodeJob', auth);
+    }
+    if (
+      auth.code !== '' &&
+      method === 'email' &&
+      data.action === 'reset_password_by_email'
+    ) {
+      queue.dispatch('sendResetPasswordCodeEmailJob', auth);
     }
     response.success(res, 200);
   } catch (error) {

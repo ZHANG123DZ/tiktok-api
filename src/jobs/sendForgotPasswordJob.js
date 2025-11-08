@@ -5,7 +5,7 @@ const loadEmail = require('@/utils/loadEmail');
 async function sendForgotPasswordJob(job) {
   const data = JSON.parse(job.payload);
   try {
-    const reset_url = `https://tiktokk.website:5173/reset-password?token=${data.token}`;
+    const reset_url = `https://localhost:5173/reset-password?token=${data.token}`;
 
     const emailData = {
       email: data.email,

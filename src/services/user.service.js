@@ -27,6 +27,7 @@ class UsersService {
         'lastName',
         'avatar',
         'bio',
+        'status',
         'postCount',
         'followerCount',
         'followingCount',
@@ -165,6 +166,15 @@ class UsersService {
       where: isId ? { id: key } : { username: key },
     });
     return user;
+  }
+
+  async banned(id) {
+    return await User.update(
+      { status: 'banned' },
+      {
+        where: { id },
+      }
+    );
   }
 }
 

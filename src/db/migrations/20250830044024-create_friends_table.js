@@ -10,7 +10,6 @@ module.exports = {
       },
       user_id: {
         type: Sequelize.BIGINT.UNSIGNED,
-        allowNull: false,
         references: {
           model: 'users',
           key: 'id',
@@ -20,7 +19,6 @@ module.exports = {
       },
       friend_id: {
         type: Sequelize.BIGINT.UNSIGNED,
-        allowNull: false,
         references: {
           model: 'users',
           key: 'id',
@@ -59,6 +57,13 @@ module.exports = {
   async down(queryInterface, Sequelize) {
     // Gỡ constraint và index trước khi drop table để tránh lỗi rollback
     await queryInterface.removeConstraint('friends', 'unique_friend_pair');
+
+    // 2. Xóa Khóa ngoại cho user_id và friend_id
+    // LƯU Ý: Đây là các tên Khóa ngoại mặc định MySQL tạo ra
+    await queryInterface.removeConstraint('friends', 'friends_ibfk_1'); // Hoặc tên khác
+    await queryInterface.removeConstraint('friends', 'friends_ibfk_2'); // Hoặc tên khác
+
+    // 3. Xóa các index (Bây giờ đã an toàn để xóa vì các ràng buộc FK đã biến mất)
     await queryInterface.removeIndex('friends', ['user_id']);
     await queryInterface.removeIndex('friends', ['friend_id']);
 

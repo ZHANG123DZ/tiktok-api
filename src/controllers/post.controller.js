@@ -10,6 +10,28 @@ const index = async (req, res) => {
   res.paginate({ items, total });
 };
 
+const GetFollowingPosts = async (req, res) => {
+  const { page, limit } = req;
+  const userId = req.user?.id;
+  const { items, total } = await postService.GetFollowingPosts(
+    page,
+    limit,
+    userId
+  );
+  res.paginate({ items, total });
+};
+
+const GetFriendsPosts = async (req, res) => {
+  const { page, limit } = req;
+  const userId = req.user?.id;
+  const { items, total } = await postService.GetFriendsPosts(
+    page,
+    limit,
+    userId
+  );
+  res.paginate({ items, total });
+};
+
 const featured = async (req, res) => {
   const { page, limit } = req;
   const userId = req.user?.id;
@@ -77,4 +99,6 @@ module.exports = {
   featured,
   related,
   latest,
+  GetFollowingPosts,
+  GetFriendsPosts,
 };

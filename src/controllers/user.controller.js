@@ -64,6 +64,14 @@ const destroy = async (req, res) => {
   response.success(res, 204);
 };
 
+const banned = async (req, res) => {
+  const result = await userService.banned(req.params.id);
+
+  if (!result) throwError(404, 'Not Found.');
+
+  response.success(res, 204);
+};
+
 module.exports = {
   show,
   index,
@@ -72,4 +80,5 @@ module.exports = {
   destroy,
   getUserPosts,
   getIntroUsers,
+  banned,
 };

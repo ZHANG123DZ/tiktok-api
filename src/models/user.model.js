@@ -47,7 +47,7 @@ module.exports = (sequelize, DataTypes) => {
         defaultValue: 0,
         allowNull: true,
         type: DataTypes.BIGINT.UNSIGNED,
-        // field: 'post_count',
+        field: 'post_count',
       },
       followerCount: {
         defaultValue: 0,

@@ -14,6 +14,10 @@ module.exports = async (req, res, next) => {
     const user = await User.findByPk(decoded?.sub);
     const userData = user?.dataValues;
 
+    if (userData?.status === 'banned') {
+      req.user = null;
+    }
+
     if (
       !userData ||
       userData.status === 'banned' ||

@@ -5,6 +5,8 @@ const auth = require('@/middlewares/auth');
 const router = express.Router();
 
 router.get('/', auth, postsController.index);
+router.get('/following', auth, postsController.GetFollowingPosts);
+router.get('/friend', auth, postsController.GetFriendsPosts);
 router.get('/latest', auth, postsController.latest);
 router.get('/featured', auth, postsController.featured);
 router.post('/related', auth, postsController.related);

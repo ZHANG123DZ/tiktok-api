@@ -4,7 +4,7 @@
 module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.createTable(
-      'users',
+      'admin',
       {
         id: {
           type: Sequelize.BIGINT.UNSIGNED,
@@ -41,51 +41,14 @@ module.exports = {
         bio: {
           type: Sequelize.TEXT,
         },
-        post_count: {
-          type: Sequelize.BIGINT.UNSIGNED,
-        },
-        follower_count: {
-          type: Sequelize.BIGINT.UNSIGNED,
-        },
-        following_count: {
-          type: Sequelize.BIGINT.UNSIGNED,
-        },
-        like_count: {
-          type: Sequelize.BIGINT.UNSIGNED,
-        },
-        report_count: {
-          type: Sequelize.BIGINT.UNSIGNED,
-        },
         gender: {
           type: Sequelize.ENUM('male', 'female', 'other'),
-        },
-        birthday: {
-          type: Sequelize.DATEONLY,
         },
         role: {
           type: Sequelize.STRING(100),
         },
         status: {
           type: Sequelize.ENUM('active', 'inactive', 'banned'),
-        },
-        is_verified_badge: { type: Sequelize.BOOLEAN },
-        two_factor_enabled: {
-          type: Sequelize.BOOLEAN,
-        },
-        login_provider: {
-          type: Sequelize.STRING(100),
-        },
-        last_seen: {
-          type: Sequelize.DATE(6),
-        },
-        last_login_at: {
-          type: Sequelize.DATE(6),
-        },
-        email_sent_at: {
-          type: Sequelize.DATE(6),
-        },
-        verified_at: {
-          type: Sequelize.DATE(6),
         },
         created_at: {
           type: Sequelize.DATE(6),
@@ -107,6 +70,6 @@ module.exports = {
   },
 
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('users');
+    await queryInterface.dropTable('admin');
   },
 };

@@ -7,6 +7,7 @@ const sendPhoneCodeJob = require('@/jobs/sendPhoneCodeJob');
 const scheduledAnnouncementEmail = require('@/jobs/scheduledAnnouncementEmail');
 const queueService = require('@/services/queue.service');
 const sendForgotPasswordJob = require('@/jobs/sendForgotPasswordJob');
+const sendResetPasswordCodeEmailJob = require('@/jobs/sendResetPasswordCodeEmailJob');
 
 const handlers = {
   sendVerifyEmailJob,
@@ -14,6 +15,7 @@ const handlers = {
   scheduledAnnouncementEmail,
   sendForgotPasswordJob,
   sendPhoneCodeJob,
+  sendResetPasswordCodeEmailJob,
 };
 
 async function jobProcess(job) {

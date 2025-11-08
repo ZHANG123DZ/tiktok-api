@@ -20,8 +20,11 @@ const searchRouter = require('./search.route');
 const translateRouter = require('./translate.route');
 const broadcastingRouter = require('./broadcasting.route');
 const repostRouter = require('./repost.route');
+const adminRouter = require('./admin.route');
+
 const auth = require('@/middlewares/auth');
 
+router.use('/admin', adminRouter);
 router.use('/broadcasting', broadcastingRouter);
 router.use('/auth', authRouter);
 router.use('/users', userRouter);

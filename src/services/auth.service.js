@@ -19,7 +19,7 @@ class authService {
     const auth = accessToken.verify(token);
     if (!auth) return null;
     const user = await User.findOne({
-      where: { id: auth.sub },
+      where: { id: auth.sub, status: 'active' },
       attributes: [
         'id',
         'email',
@@ -29,6 +29,7 @@ class authService {
         'lastName',
         'avatar',
         'bio',
+        'status',
         'followerCount',
         'followingCount',
         'postCount',
@@ -85,7 +86,9 @@ class authService {
       year,
     } = data;
     data.password = await bcrypt.hash(password, saltRounds);
-    data.birthday = toDate(day, month, year);
+    if (day && month && year) {
+      data.birthday = toDate(day, month, year);
+    }
     if (!username) {
       const identifier = email || phone;
       const username = await generateUsername(identifier);
@@ -187,6 +190,20 @@ class authService {
       action,
       target,
     });
+    const user = await User.findOne({
+      where: {
+        ...(data?.phone && { phone: data?.phone }),
+        ...(data?.email && { email: data?.email }),
+      },
+      attributes: ['username'],
+    });
+
+    // ✅ Chỉ gán nếu tìm thấy user
+    if (user) {
+      code.dataValues.username = user.username;
+    } else {
+      code.dataValues.username = null;
+    }
     return code.dataValues;
   }
 
