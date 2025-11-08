@@ -72,6 +72,14 @@ const banned = async (req, res) => {
   response.success(res, 204);
 };
 
+const unbanned = async (req, res) => {
+  const result = await userService.unbanned(req.params.id);
+
+  if (!result) throwError(404, 'Not Found.');
+
+  response.success(res, 204);
+};
+
 module.exports = {
   show,
   index,
@@ -81,4 +89,5 @@ module.exports = {
   getUserPosts,
   getIntroUsers,
   banned,
+  unbanned,
 };

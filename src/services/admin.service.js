@@ -1,5 +1,3 @@
-// services/admin.service.js
-
 const bcrypt = require('bcrypt');
 const { Admin } = require('@/models/index');
 const jwt = require('jsonwebtoken');
@@ -7,7 +5,7 @@ const jwt = require('jsonwebtoken');
 const JWT_SECRET = process.env.ADMIN_JWT_SECRET;
 
 class AdminService {
-  async login({ email, password, deviceId, ip }) {
+  async login({ email, password }) {
     // 1️⃣ Tìm admin theo email
     const admin = await Admin.findOne({ where: { email } });
     if (!admin) throw new Error('Email không tồn tại');
@@ -16,9 +14,9 @@ class AdminService {
     // const valid = await bcrypt.compare(password, admin.password);
     // if (!valid) throw new Error('Sai mật khẩu');
 
-    // 3️⃣ Tạo token JWT
+    // 3️⃣ Tạo token JWT (chỉ payload là id admin)
     const token = jwt.sign(
-      { id: admin.id, deviceId, ip },
+      { id: admin.id },
       JWT_SECRET,
       { expiresIn: '7d' } // token sống 7 ngày
     );

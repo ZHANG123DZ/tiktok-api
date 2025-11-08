@@ -3,16 +3,13 @@ const AdminService = require('@/services/admin.service');
 class AdminController {
   login = async (req, res) => {
     try {
-      // Lấy ip thật của request
-      const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-      const { email, password, deviceId } = req.body;
+      // const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress; // Bỏ dòng này
+      const { email, password } = req.body; // Bỏ deviceId, ip
 
-      // Gọi service login
+      // Gọi service login không truyền deviceId, ip nữa
       const { admin, token } = await AdminService.login({
         email,
         password,
-        deviceId,
-        ip,
       });
 
       // Gắn token vào cookie (HTTP-only để bảo mật)

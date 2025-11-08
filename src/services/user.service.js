@@ -176,6 +176,15 @@ class UsersService {
       }
     );
   }
+
+  async unbanned(id) {
+    return await User.update(
+      { status: 'active' },
+      {
+        where: { id },
+      }
+    );
+  }
 }
 
 module.exports = new UsersService();
